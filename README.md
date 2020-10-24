@@ -36,6 +36,9 @@ class Shape:
     ## Calculate size
     method calculateSize(): float = return 0
 
+    ## Static method
+    method defaultSize(): float {.static.} = 5
+
 
 # A subclass
 class Square of Shape:
@@ -61,6 +64,12 @@ let obj = Square.new()
 let obj = Square.init()
 let obj = Square().init()
 let obj = newSquare()
+
+# Call static methods
+# NOTE: Due to a bug in Nim (or something I'm doing wrong), static methods don't 
+# always work if the name of your nim file is the exact same as the class name. 
+# You may get a `type mismatch: got <>` error.
+Shape.defaultSize()
 
 
 # Data only classes

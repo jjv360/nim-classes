@@ -1,6 +1,6 @@
 import ./src/classes
 import terminal
-import ./test2
+import ExternalClassTest
 
 
 
@@ -38,6 +38,7 @@ test "Class variables overwritten by subclass"
 class ClassWithVars2 of ClassWithVars: 
     var var1 = "hello rewritten"
 
+assert(ClassWithVars2().init().var2 == 2)
 assert(ClassWithVars2().init().var1 == "hello rewritten")
 
 
@@ -212,14 +213,13 @@ assert(NimClass4().init().v1 == "hi")
 
 
 group "Exported classes"
-test "Use a method"
-Test2Class1.init().test()
-newTest2Class1().test()
-Test2Class1.new().test
-
 test "Use a static method"
-Test2Class2.test()
-discard Database.shared()
+ExternalClass.testStatic()
+
+test "Use a normal method"
+ExternalClass.init().test()
+newExternalClass().test()
+ExternalClass.new().test
 
 
 
