@@ -5,20 +5,6 @@ import macros
 import tables
 import sequtils
 
-## DEBUG: Print out the AST for some code
-# macro printast(head: untyped, body: untyped): untyped = echo body.treeRepr
-# printast tst:
-#     var myString = ""
-#     var myManualString: string = ""
-#     var myNullString: string
-#     var 
-#         exposedString* = "hi"
-#         another = "2"
-#         third = @[]
-
-#     type MyObj = object
-#         var1: string
-
 ## Specify a class method as a static function
 template static* {.pragma.}
 

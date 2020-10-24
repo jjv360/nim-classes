@@ -2,7 +2,7 @@
 
 version       = "0.1.1"
 author        = "jjv360"
-description   = "A collection of macros which add class support to Nim."
+description   = "Adds class support to Nim."
 license       = "MIT"
 srcDir        = "src"
 installExt    = @["nim"]
