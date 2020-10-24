@@ -60,10 +60,8 @@ class Square of Shape:
 
 
 # Many new ways of creating class instances:
-let obj = Square.new()
 let obj = Square.init()
 let obj = Square().init()
-let obj = newSquare()
 
 # Call static methods
 # NOTE: Due to a bug in Nim (or something I'm doing wrong), static methods don't 

@@ -30,7 +30,6 @@ class ClassWithVars:
 assert(ClassWithVars().init().var0 == 0)
 assert(ClassWithVars.init().var1 == "hello")
 assert(newClassWithVars().var2 == 2)
-assert(ClassWithVars.new().var2 == 2)
 
 
 
@@ -79,6 +78,25 @@ class D of C
 assert(C.new(5).v1 == 15)
 assert(D.new(5).v1 == 15)
 
+var tmp1 = 5
+class E:
+    method init() =
+        tmp1 = tmp1 + 5
+
+class F of E
+
+class G of F:
+    method init() =
+        super.init()
+        tmp1 = tmp1 + 5
+
+discard E.init()
+assert(tmp1 == 10)
+discard F.init()
+assert(tmp1 == 15)
+discard G.init()
+assert(tmp1 == 25)
+
 
 test "Automatic constructors on subclasses with overwritten vars"
 warn "Not implemented yet, will not set variable values"
@@ -110,7 +128,7 @@ class ClassWith3Init:
 
 assert(ClassWith3Init().init(5, 5, 5, e=4.5, d=3.4).v1 == 15)
 assert(newClassWith3Init(5, 5, 5, e=4.5, d=3.4).v1 == 15)
-assert(ClassWith3Init.new(5, 5, 5, e=4.5, d=3.4).v1 == 15)
+assert(ClassWith3Init.init(5, 5, 5, e=4.5, d=3.4).v1 == 15)
 
 
 

@@ -214,8 +214,8 @@ macro class*(head: untyped, body: untyped): untyped =
         # For each IdentDef, add it
         for i, identDef in methodNode.params:
 
-            # Ignore first one which is the return value, and the second one which is "this"
-            if i < 2:
+            # Ignore first one which is the return value
+            if i == 0:
                 continue
 
             # For each ident inside
@@ -260,6 +260,11 @@ macro class*(head: untyped, body: untyped): untyped =
 
         # We only care about method definitions right now
         if node.kind != nnkMethodDef: continue
+
+        # Store this method def
+        let copiedDef = copyNimTree(node)
+        copiedDef.body = newEmptyNode()
+        classInfo.methodDefs.add(copiedDef)
 
         # Make a copy with no body, since this is going to be a forward declaration
         var methodNode = copyNimTree(node)
@@ -307,7 +312,6 @@ macro class*(head: untyped, body: untyped): untyped =
         # Add it
         if showDebugInfo: echo "Adding declaration for " & (if isStatic: "static " else: "") & "method: name=" & $methodNode.name & " args=" & $(methodNode.params.len()-2)
         result.add(methodNode)
-        classInfo.methodDefs.add(methodNode)
 
     
 
@@ -334,7 +338,7 @@ macro class*(head: untyped, body: untyped): untyped =
 
                 # Go through each variable that has a default value and set it again. This is a bit nasty... but it ensures that calling super.init() doesn't
                 # overwrite the subclass's reassigned var values
-                if showDebugInfo: echo "Injecting initial var values again into init() method since super was called, count = ", $initialValues.len()
+                if showDebugInfo: echo "Injecting initial var values into init() method again since super was called, count = ", $initialValues.len()
                 for name, value in initialValues:
 
                     # Add code
@@ -406,8 +410,9 @@ macro class*(head: untyped, body: untyped): untyped =
 
             # Create wrapper function
             let initName = ident"init"
+            let underscore = ident"_"
             var newFunc = quote do: 
-                proc `initName`(_: typedesc[`className`]): untyped {.used.} = `className`().init()
+                proc `initName`(`underscore`: typedesc[`className`]): untyped {.used.} = `className`().init()
 
             # Set return type
             newFunc[3][0] = className
@@ -436,14 +441,23 @@ macro class*(head: untyped, body: untyped): untyped =
 
             # Done, add it
             result.add(newFunc)
+            # echo newFunc.repr
 
         # If this is an init method, add a Class.new() wrapper function for it.
         if $methodNode.name == "init":
 
             # Create wrapper function
             let initName = ident"new"
+            let underscore = ident"_"
+            let classNameStr = $className
             var newFunc = quote do: 
-                proc `initName`(_: typedesc[`className`]): untyped {.used.} = `className`().init()
+                proc `initName`(`underscore`: typedesc[`className`]): untyped {.used.} = 
+                    let o = `className`()
+                    discard o.init()
+                    return o
+
+            # echo newFunc.treeRepr
+            # quit()
 
             # Set return type
             newFunc[3][0] = className
@@ -467,10 +481,12 @@ macro class*(head: untyped, body: untyped): untyped =
                     newFunc.params.add(newIdentDefs(paramIdent, typeNode, newEmptyNode()))
 
                     # Add to template's function call
-                    newFunc[6][0].add(paramIdent)
+                    newFunc[6][1][0].add(paramIdent)
 
             # Done, add it
             result.add(newFunc)
+            # echo newFunc.repr
+            # if $className == "DialerWindow": quit()
 
         # Check if it's static ... would have been nice to use hasCustomPragma() here?
         var isStatic = false
@@ -557,9 +573,11 @@ macro class*(head: untyped, body: untyped): untyped =
 
     # Export class
     let newClassName = ident("new" & $className)
+    let newMacro = ident"new"
     result.add(quote do:
         export `className`
         export `newClassName`
+        export `newMacro`
     )
 
     # Export all functions
@@ -582,6 +600,10 @@ macro class*(head: untyped, body: untyped): untyped =
     #     {. pop.}
     # )
 
+    # if $className == "DialerWindow":
+    #     echo result.repr
+    #     quit()
+
 
 
 ## Support for empty class definition
@@ -590,17 +612,64 @@ macro class*(head: untyped): untyped = quote do: class `head`: discard
 
 
 ## Support for using the `new` keyword
-# macro new*(args: untyped): untyped =
+macro new*(args: untyped): untyped =
 
-#     # Check body type
-#     if false:
+    # Replacement function for object creation
+    var hasDone = false
+    proc replaceObjConstr(item: var NimNode) =
 
-#         discard
+        # Stop once one is done
+        if hasDone: return
 
-#     else:
+        # Find the first
+        if item.kind == nnkObjConstr or item.kind == nnkCall:
 
-#         # We don't know what to do, just call 
-#         discard
+            echo item.treeRepr
 
-#     echo args.treeRepr
-#     quit()
+            let vv = quote do:
+                type A = ref object of RootObj
+                A()
+                (A().init())
+
+            # Found a match, wrap the construction in (Obj().init())
+            echo vv.treeRepr
+            quit()
+            # item = newTree(nnkCommand,
+            #     bindSym("procCall"),
+            #     copyNimTree(item)
+            # )
+
+            # If calling super.init(), discard the result
+            # if $item[1][0][1] == "init":
+
+            #     # Discard the result
+            #     item = newStmtList(
+            #         newTree(nnkDiscardStmt, item)
+            #     )
+
+            #     # Go through each variable that has a default value and set it again. This is a bit nasty... but it ensures that calling super.init() doesn't
+            #     # overwrite the subclass's reassigned var values
+            #     for name, value in initialValues:
+
+            #         # Add code
+            #         let varIdent = ident(name)
+            #         item.add(quote do:
+            #             this.`varIdent` = `value`
+            #         )
+
+            # Done
+            hasDone = true
+            return
+
+        # Not found, try the children
+        for i, child in item:
+
+            # Modify child
+            var child2 = child
+            replaceObjConstr(child2)
+            item[i] = child2
+
+    # Replace object constructor calls
+    var copyArgs = copyNimTree(args)
+    replaceObjConstr(copyArgs)
+    result = copyArgs
