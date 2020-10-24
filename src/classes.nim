@@ -328,21 +328,32 @@ macro class*(head: untyped, body: untyped): untyped =
             # Create wrapper function
             let funcName = ident("new" & $className)
             var newFunc = quote do: 
-                template `funcName`(): untyped {.used.} = `className`().init()
+                proc `funcName`(): untyped {.used.} = `className`().init()
 
-            # For each param, add it
-            for i, param in methodNode.params:
+            # Set return type
+            newFunc[3][0] = className
+
+            # For each IdentDef, add it
+            for i, identDef in methodNode.params:
 
                 # Ignore first one
                 if i == 0:
                     continue
 
-                # Add to template's param list
-                let varName = "v" & $i
-                newFunc.params.add(newIdentDefs(ident(varName), bindSym"untyped", newEmptyNode()))
+                # For each ident inside
+                let typeNode = identDef[identDef.len()-2]
+                for x, paramIdent in identDef:
 
-                # Add to template's function call
-                newFunc[6][0].add(ident(varName))
+                    # Skip last two
+                    if x >= identDef.len()-2:
+                        continue
+
+                    # Add to template's param list
+                    # let varName = "v" & $i & "_" & $x
+                    newFunc.params.add(newIdentDefs(paramIdent, typeNode, newEmptyNode()))
+
+                    # Add to template's function call
+                    newFunc[6][0].add(paramIdent)
 
             # Done, add it
             result.add(newFunc)
@@ -354,21 +365,67 @@ macro class*(head: untyped, body: untyped): untyped =
             # Create wrapper function
             let initName = ident"init"
             var newFunc = quote do: 
-                template `initName`(_: typedesc[`className`]): untyped {.used.} = `className`().init()
+                proc `initName`(_: typedesc[`className`]): untyped {.used.} = `className`().init()
 
-            # For each param, add it
-            for i, param in methodNode.params:
+            # Set return type
+            newFunc[3][0] = className
+
+            # For each IdentDef, add it
+            for i, identDef in methodNode.params:
 
                 # Ignore first one
                 if i == 0:
                     continue
 
-                # Add to template's param list
-                let varName = "v" & $i
-                newFunc.params.add(newIdentDefs(ident(varName), bindSym"untyped", newEmptyNode()))
+                # For each ident inside
+                let typeNode = identDef[identDef.len()-2]
+                for x, paramIdent in identDef:
 
-                # Add to template's function call
-                newFunc[6][0].add(ident(varName))
+                    # Skip last two
+                    if x >= identDef.len()-2:
+                        continue
+
+                    # Add to template's param list
+                    # let varName = "v" & $i & "_" & $x
+                    newFunc.params.add(newIdentDefs(paramIdent, typeNode, newEmptyNode()))
+
+                    # Add to template's function call
+                    newFunc[6][0].add(paramIdent)
+
+            # Done, add it
+            result.add(newFunc)
+
+        # If this is an init method, add a Class.new() wrapper function for it.
+        if $methodNode.name == "init":
+
+            # Create wrapper function
+            let initName = ident"new"
+            var newFunc = quote do: 
+                proc `initName`(_: typedesc[`className`]): untyped {.used.} = `className`().init()
+
+            # Set return type
+            newFunc[3][0] = className
+
+            # For each IdentDef, add it
+            for i, identDef in methodNode.params:
+
+                # Ignore first one
+                if i == 0:
+                    continue
+
+                # For each ident inside
+                let typeNode = identDef[identDef.len()-2]
+                for x, paramIdent in identDef:
+
+                    # Skip last two
+                    if x >= identDef.len()-2:
+                        continue
+
+                    # Add to template's param list
+                    newFunc.params.add(newIdentDefs(paramIdent, typeNode, newEmptyNode()))
+
+                    # Add to template's function call
+                    newFunc[6][0].add(paramIdent)
 
             # Done, add it
             result.add(newFunc)
@@ -454,8 +511,10 @@ macro class*(head: untyped, body: untyped): untyped =
         classInfo.methodIdents.add(methodNode.name)
 
     # Export class
+    let newClassName = ident("new" & $className)
     result.add(quote do:
         export `className`
+        export `newClassName`
     )
 
     # Export all functions
@@ -463,6 +522,12 @@ macro class*(head: untyped, body: untyped): untyped =
         result.add(quote do:
             export `m`
         )
+
+    # Export new keyword which was imported from our lib
+    # let newIdent = ident"new"
+    # result.add(quote do:
+    #     export `newIdent`
+    # )
 
     # Done, restore compiler warnings we temporarily disabled
     # result.add(quote do:
@@ -473,3 +538,21 @@ macro class*(head: untyped, body: untyped): untyped =
 
 ## Support for empty class definition
 macro class*(head: untyped): untyped = quote do: class `head`: discard
+
+
+
+## Support for using the `new` keyword
+# macro new*(args: untyped): untyped =
+
+#     # Check body type
+#     if false:
+
+#         discard
+
+#     else:
+
+#         # We don't know what to do, just call 
+#         discard
+
+#     echo args.treeRepr
+#     quit()

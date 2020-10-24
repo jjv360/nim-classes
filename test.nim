@@ -28,8 +28,9 @@ class ClassWithVars:
     var var4: seq[string] = @["hi"]
 
 assert(ClassWithVars().init().var0 == 0)
-assert(ClassWithVars().init().var1 == "hello")
+assert(ClassWithVars.init().var1 == "hello")
 assert(newClassWithVars().var2 == 2)
+assert(ClassWithVars.new().var2 == 2)
 
 
 
@@ -67,13 +68,15 @@ assert(ClassWithZeroInit().init().v1 == 10)
 
 
 
-test "Constructor with 3 args"
+test "Constructor with 5 args"
 class ClassWith3Init:
     var v1: int
-    method init(a, b, c: int) =
+    method init(a, b, c: int, d: float, e: float) =
         this.v1 = a + b + c
 
-assert(ClassWith3Init().init(5, 5, 5).v1 == 15)
+assert(ClassWith3Init().init(5, 5, 5, e=4.5, d=3.4).v1 == 15)
+assert(newClassWith3Init(5, 5, 5, e=4.5, d=3.4).v1 == 15)
+assert(ClassWith3Init.new(5, 5, 5, e=4.5, d=3.4).v1 == 15)
 
 
 
@@ -178,6 +181,8 @@ assert(NimClass4().init().v1 == "hi")
 group "Exported classes"
 test "Use a method"
 Test2Class1.init().test()
+newTest2Class1().test()
+Test2Class1.new().test
 
 test "Use a static method"
 Test2Class2.test()

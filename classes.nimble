@@ -1,6 +1,6 @@
 # Package
 
-version       = "0.1.0"
+version       = "0.1.1"
 author        = "jjv360"
 description   = "A collection of macros which add class support to Nim."
 license       = "MIT"
