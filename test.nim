@@ -43,7 +43,7 @@ assert(ClassWithVars2().init().var1 == "hello rewritten")
 
 
 group "Constructors"
-test "Automatic constructors"
+test "Automatic constructors on the base class"
 class ClassA
 
 # Our method of creating classes
@@ -52,6 +52,27 @@ let classA1 = ClassA.init()
 # Nim's method of creating classes
 let classA2 = newClassA()
 
+
+
+
+test "Automatic constructors on subclasses"
+
+class C:
+    var v1 = 5
+    method init(i: int) = this.v1 = this.v1 + 5 + i
+
+class D of C
+
+assert(C.new(5).v1 == 15)
+assert(D.new(5).v1 == 15)
+
+
+test "Automatic constructors on subclasses with overwritten vars"
+warn "Not implemented yet, will not set variable values"
+# class E of C:
+#     var v1 = 10
+
+# assert(E.new(5).v1 == 20)
 
 
 
