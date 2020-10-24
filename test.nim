@@ -42,6 +42,18 @@ assert(ClassWithVars2().init().var1 == "hello rewritten")
 
 
 
+test "Data only class"
+class DataOnly:
+    var v1 = 5
+    var v2: int
+    var v3: string
+
+assert(DataOnly(v3: "hi", v2: 10).init().v1 == 5)
+assert(DataOnly(v3: "hi", v2: 10).init().v2 == 10)
+assert(DataOnly(v3: "hi", v2: 10).init().v3 == "hi")
+
+
+
 group "Constructors"
 test "Automatic constructors on the base class"
 class ClassA

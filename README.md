@@ -61,4 +61,14 @@ let obj = Square.new()
 let obj = Square.init()
 let obj = Square().init()
 let obj = newSquare()
+
+
+# Data only classes
+class DataOnly:
+    var v0 = 7
+    var v1: int
+    var v2: string
+
+# Constructing it this way allows you to pass in values for the variables that don't have values set
+let obj = DataOnly(v1: 10, v2: "20").init()
 ```
