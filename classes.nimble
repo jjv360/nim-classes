@@ -1,0 +1,17 @@
+# Package
+
+version       = "0.1.0"
+author        = "jjv360"
+description   = "A collection of macros which add class support to Nim."
+license       = "MIT"
+srcDir        = "src"
+installExt    = @["nim"]
+
+
+# Dependencies
+
+requires "nim >= 1.4.0"
+
+
+# Tasks
+task test, "Test": exec "nim compile --run --d:debugclasses test.nim"
