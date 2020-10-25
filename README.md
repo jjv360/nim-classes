@@ -2,7 +2,7 @@
 
 ![](https://img.shields.io/badge/status-alpha-red)
 
-A collection of macros which add class support to Nim. To install, clone this repo and run `nimble install`. Features include:
+A collection of macros which add class support to Nim. To install, run `nimble install classes`. Features include:
 
 - Simple class syntax
 - Class variables with default values
