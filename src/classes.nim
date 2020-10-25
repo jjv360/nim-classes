@@ -153,6 +153,10 @@ macro class*(head: untyped, body: untyped): untyped =
                 if valueNode.kind == nnkFloat64Lit: typeNode = ident"float64"
                 if valueNode.kind == nnkFloat128Lit: typeNode = ident"float128"
                 if valueNode.kind == nnkStrLit: typeNode = ident"string"
+                if valueNode.kind == nnkSym and $valueNode == "false": typeNode = ident"bool"
+                if valueNode.kind == nnkSym and $valueNode == "true": typeNode = ident"bool"
+                if valueNode.kind == nnkIdent and $valueNode == "false": typeNode = ident"bool"
+                if valueNode.kind == nnkIdent and $valueNode == "true": typeNode = ident"bool"
 
                 # If they haven't specified a type, but they have created an object, use that type
                 # This doesn't work, it would take the function itself as the type

@@ -26,10 +26,12 @@ class ClassWithVars:
     var var2: int = len("hi")
     var var3: seq[string]
     var var4: seq[string] = @["hi"]
+    var var5 = true
 
 assert(ClassWithVars().init().var0 == 0)
 assert(ClassWithVars.init().var1 == "hello")
 assert(newClassWithVars().var2 == 2)
+assert(ClassWithVars.init().var5 == true)
 
 
 
