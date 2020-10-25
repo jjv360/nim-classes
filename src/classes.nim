@@ -612,64 +612,64 @@ macro class*(head: untyped): untyped = quote do: class `head`: discard
 
 
 ## Support for using the `new` keyword
-macro new*(args: untyped): untyped =
+# macro new*(args: untyped): untyped =
 
-    # Replacement function for object creation
-    var hasDone = false
-    proc replaceObjConstr(item: var NimNode) =
+#     # Replacement function for object creation
+#     var hasDone = false
+#     proc replaceObjConstr(item: var NimNode) =
 
-        # Stop once one is done
-        if hasDone: return
+#         # Stop once one is done
+#         if hasDone: return
 
-        # Find the first
-        if item.kind == nnkObjConstr or item.kind == nnkCall:
+#         # Find the first
+#         if item.kind == nnkObjConstr or item.kind == nnkCall:
 
-            echo item.treeRepr
+#             echo item.treeRepr
 
-            let vv = quote do:
-                type A = ref object of RootObj
-                A()
-                (A().init())
+#             let vv = quote do:
+#                 type A = ref object of RootObj
+#                 A()
+#                 (A().init())
 
-            # Found a match, wrap the construction in (Obj().init())
-            echo vv.treeRepr
-            quit()
-            # item = newTree(nnkCommand,
-            #     bindSym("procCall"),
-            #     copyNimTree(item)
-            # )
+#             # Found a match, wrap the construction in (Obj().init())
+#             echo vv.treeRepr
+#             quit()
+#             # item = newTree(nnkCommand,
+#             #     bindSym("procCall"),
+#             #     copyNimTree(item)
+#             # )
 
-            # If calling super.init(), discard the result
-            # if $item[1][0][1] == "init":
+#             # If calling super.init(), discard the result
+#             # if $item[1][0][1] == "init":
 
-            #     # Discard the result
-            #     item = newStmtList(
-            #         newTree(nnkDiscardStmt, item)
-            #     )
+#             #     # Discard the result
+#             #     item = newStmtList(
+#             #         newTree(nnkDiscardStmt, item)
+#             #     )
 
-            #     # Go through each variable that has a default value and set it again. This is a bit nasty... but it ensures that calling super.init() doesn't
-            #     # overwrite the subclass's reassigned var values
-            #     for name, value in initialValues:
+#             #     # Go through each variable that has a default value and set it again. This is a bit nasty... but it ensures that calling super.init() doesn't
+#             #     # overwrite the subclass's reassigned var values
+#             #     for name, value in initialValues:
 
-            #         # Add code
-            #         let varIdent = ident(name)
-            #         item.add(quote do:
-            #             this.`varIdent` = `value`
-            #         )
+#             #         # Add code
+#             #         let varIdent = ident(name)
+#             #         item.add(quote do:
+#             #             this.`varIdent` = `value`
+#             #         )
 
-            # Done
-            hasDone = true
-            return
+#             # Done
+#             hasDone = true
+#             return
 
-        # Not found, try the children
-        for i, child in item:
+#         # Not found, try the children
+#         for i, child in item:
 
-            # Modify child
-            var child2 = child
-            replaceObjConstr(child2)
-            item[i] = child2
+#             # Modify child
+#             var child2 = child
+#             replaceObjConstr(child2)
+#             item[i] = child2
 
-    # Replace object constructor calls
-    var copyArgs = copyNimTree(args)
-    replaceObjConstr(copyArgs)
-    result = copyArgs
+#     # Replace object constructor calls
+#     var copyArgs = copyNimTree(args)
+#     replaceObjConstr(copyArgs)
+#     result = copyArgs
