@@ -60,7 +60,7 @@ class Square of Shape:
     method calculateSize(): float = super.calculateSize() + this.radius
 
 
-# Many new ways of creating class instances:
+# Many ways of creating class instances:
 let obj = Square.init()
 let obj = Square().init()
 let obj = newSquare()
