@@ -138,6 +138,48 @@ warn "Not implemented yet"
 
 
 
+group "Comments"
+test "Comment inside method"
+
+class CommentA:
+
+    method a() =
+        ## Test
+        discard
+
+CommentA.init().a()
+
+
+test "Comment outside method"
+
+class CommentB:
+
+    ## Test
+    method b() =
+        discard
+
+    ## Test2
+    method c() =
+        ## Actual
+        discard
+
+    ## Test
+    method d() =
+
+        # Not real
+        discard
+
+CommentB.init().b() 
+CommentB.init().c()
+CommentB.init().d()
+
+# TODO: How do we test for this?
+
+
+
+
+
+
 group "Superclass access"
 test "Super constructor"
 class WithSuper3:

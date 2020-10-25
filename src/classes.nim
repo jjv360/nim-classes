@@ -360,13 +360,18 @@ macro class*(head: untyped, body: untyped): untyped =
 
 
     # Add real methods
-    for node in body:
+    for i, node in body:
 
         # We only care about method definitions right now
         if node.kind != nnkMethodDef: continue
 
         # Get method + body
         var methodNode = copyNimTree(node)
+
+        # Check for comment directly above the method, if so copy it into the method, but only if the first entry in the method is not a comment.
+        # This is to support the comment style with the comment directly above the class.
+        if i > 0 and body[i-1].kind == nnkCommentStmt and methodNode.body[0].kind != nnkCommentStmt:
+            methodNode.body.insert(0, body[i-1])
 
         # If this is an init method, add a newClass wrapper function for it
         if $methodNode.name == "init":
@@ -529,9 +534,10 @@ macro class*(head: untyped, body: untyped): untyped =
             )
 
         # Inject the 'super' variable, which is just this class cast to the base class type ... but not for static functions
+        let hasInitialComment = methodNode.body[0].kind == nnkCommentStmt
         if not isStatic:
             let sname = ident"super"
-            methodNode.body.insert(0, quote do: 
+            methodNode.body.insert(if hasInitialComment: 1 else: 0, quote do: 
                 let `sname`: `baseName` = cast[`baseName`](this)
                 if super == super: discard # <-- HACK: I can't get rid of the "unused" warning ...
             )
@@ -545,7 +551,7 @@ macro class*(head: untyped, body: untyped): untyped =
 
                 # Add code
                 let varIdent = ident(name)
-                methodNode.body.insert(1, quote do:
+                methodNode.body.insert(if hasInitialComment: 2 else: 1, quote do:
                     this.`varIdent` = `value`
                 )
 
@@ -600,7 +606,7 @@ macro class*(head: untyped, body: untyped): untyped =
     #     {. pop.}
     # )
 
-    # if $className == "DialerWindow":
+    # if $className == "CommentB":
     #     echo result.repr
     #     quit()
 
