@@ -1,5 +1,7 @@
 # Classes
 
+![](https://img.shields.io/badge/status-alpha-red)
+
 A collection of macros which add class support to Nim. To install, clone this repo and run `nimble install`. Features include:
 
 - Simple class syntax
@@ -8,7 +10,6 @@ A collection of macros which add class support to Nim. To install, clone this re
 - Default constructors
 - Static and abstract methods
 - Methods and variables defined in any order
-- ... and more! Run `nimble test` or look at test.nim to see more.
 
 ## Examples
 
@@ -53,7 +54,7 @@ class Square of Shape:
 
     ## Draw it
     method draw() =
-        echo "Drawing a square of size " & $this.
+        echo "Drawing a square of size " & $this.calculateSize()
 
     ## Calculate size
     method calculateSize(): float = super.calculateSize() + this.radius
@@ -65,9 +66,8 @@ let obj = Square().init()
 let obj = newSquare()
 
 # Call static methods
-# NOTE: Due to a bug in Nim (or something I'm doing wrong), static methods don't 
-# always work if the name of your nim file is the exact same as the class name. 
-# You may get a `type mismatch: got <>` error.
+# NOTE: Static methods don't always work if the name of your nim file is the exact same as the class name. 
+# You may get a `type mismatch: got <>` error in that case.
 Shape.defaultSize()
 
 
