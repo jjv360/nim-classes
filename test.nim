@@ -290,8 +290,8 @@ test "Get class name at runtime"
 class Adv1
 class Adv2 of Adv1
 
-assert(Adv1.init().clsName == "Adv1")
-assert(Adv2.init().clsName == "Adv2")
+assert(Adv1.init().className == "Adv1")
+assert(Adv2.init().className == "Adv2")
 
 
 

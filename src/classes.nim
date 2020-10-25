@@ -66,7 +66,7 @@ macro class*(head: untyped, body: untyped): untyped =
     # Create internal clsName() method
     let classNameStr = $className
     body.add(quote do:
-        method clsName(): string {.used.} = `classNameStr`
+        method className(): string {.used.} = `classNameStr`
     )
 
     # Create type section
