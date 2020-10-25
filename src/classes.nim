@@ -63,6 +63,12 @@ macro class*(head: untyped, body: untyped): untyped =
     #     {. hints: off.}
     # )
 
+    # Create internal clsName() method
+    let classNameStr = $className
+    body.add(quote do:
+        method clsName(): string {.used.} = `classNameStr`
+    )
+
     # Create type section
     result.add(quote do:
         type `className`* = ref object of `baseName`
