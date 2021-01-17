@@ -21,7 +21,7 @@ type ClassInfo = ref object of RootObj
     methodDefs: seq[NimNode]
 
 var allClasses {.compileTime.}: seq[ClassInfo] = @[
-    ClassInfo(classIdent: ident("RootObj"))
+    ClassInfo(classIdent: ident("RootRef"))
 ]
 
 ## Class definition
@@ -42,7 +42,7 @@ macro class*(head: untyped, body: untyped): untyped =
 
         # Format is: class MyClass
         className = head
-        baseName = ident"RootObj"
+        baseName = ident"RootRef"
 
     if head.kind == nnkInfix:
 
@@ -602,8 +602,8 @@ macro class*(head: untyped, body: untyped): untyped =
             export `m`
         )
 
-    if $className == "ExternalClass":
-        echo result.repr
+    # if $className == "AsyncCls":
+    #     echo result.repr
 
     # Export new keyword which was imported from our lib
     # let newIdent = ident"new"

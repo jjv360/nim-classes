@@ -1,6 +1,7 @@
 import ./src/classes
 import terminal
 import ExternalClassTest
+import asyncdispatch
 
 
 
@@ -294,6 +295,18 @@ class Adv2 of Adv1
 
 assert(Adv1.init().className == "Adv1")
 assert(Adv2.init().className == "Adv2")
+
+
+
+test "Run an async function"
+
+class AsyncCls:
+    method testVoid() {.async.} = discard
+    method testInt(): Future[int] {.async.} = return 3
+
+waitFor AsyncCls.init().testVoid()
+let i: int = waitFor AsyncCls.init().testInt()
+assert(i == 3)
 
 
 
