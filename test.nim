@@ -311,5 +311,71 @@ assert(i == 3)
 
 
 
+group "Mixins"
+test "Apply mixin to class"
+
+class Mixed1:
+
+    ## Comment here
+    var var0 = 0
+    var var1 = "hello"
+
+class Mixed2:
+    mixin Mixed1
+
+    ## Comment here
+    var var2 = 0
+    var var3 = "hello"
+
+assert(Mixed2.init().var1 == "hello")
+
+
+test "Modify mixin variable from class"
+
+class Mixed3:
+    method init() =
+        this.var0 = 3
+
+    mixin Mixed1
+
+assert(Mixed3.init().var0 == 3)
+
+
+test "Modify class variable from mixin"
+
+class Mixed4:
+    var var0 = 2
+    method update() = 
+        this.var0 = this.var0 * 2
+
+class Mixed5:
+    mixin Mixed4
+    
+let mixed5 = Mixed5.init()
+mixed5.update()
+assert(mixed5.var0 == 4)
+
+
+test "Subclass with mixin"
+
+class Mixed6 of Mixed1:
+    mixin Mixed2
+
+assert(Mixed6.init().var3 == "hello")
+
+
+test "Subclassed mixin"
+
+class Mixed7 of Mixed4
+class Mixed8 of Mixed2:
+    mixin Mixed7
+
+let mixed8 = Mixed8.init()
+mixed8.update()
+assert(mixed8.var0 == 4)
+
+
+
+
 # All tests done
 echo ""

@@ -1,6 +1,6 @@
 # Classes
 
-![](https://img.shields.io/badge/status-alpha-red)
+![](https://img.shields.io/badge/status-beta-orange)
 
 A collection of macros which add class support to Nim. To install, run `nimble install classes`. Features include:
 
@@ -10,6 +10,7 @@ A collection of macros which add class support to Nim. To install, run `nimble i
 - Default constructors
 - Static and abstract methods
 - Methods and variables defined in any order
+- Mixins
 
 ## Examples
 
@@ -79,4 +80,14 @@ class DataOnly:
 
 # Constructing it this way allows you to pass in values for the variables that don't have values set
 let obj = DataOnly(v1: 10, v2: "20").init()
+
+# Using the mixin keyword will copy the variables and methods from one class to another
+class CustomNote:
+    var note = ""
+
+class Circle of Shape:
+    mixin CustomNote
+
+let circle = Circle.init()
+circle.note = "My custom note"
 ```

@@ -19,10 +19,28 @@ type ClassInfo = ref object of RootObj
     varIdents: seq[NimNode]
     methodIdents: seq[NimNode]
     methodDefs: seq[NimNode]
+    mixinVars: seq[NimNode]
+    mixinMethods: seq[NimNode]
 
 var allClasses {.compileTime.}: seq[ClassInfo] = @[
     ClassInfo(classIdent: ident("RootRef"))
 ]
+
+## Compile time function to get class info for an ident
+proc getClassInfo(classIdent: NimNode, shouldFail: bool): ClassInfo {.compileTime.} =
+
+    # Find the class with a matching ident
+    for inf in allClasses:
+        if eqIdent(inf.classIdent, classIdent):
+            return inf
+
+    # Not found! Fail.
+    if shouldFail:
+        error("Class definition of " & $classIdent & " not found. Has this class been defined?", classIdent)
+    else:
+        return nil
+
+
 
 ## Class definition
 macro class*(head: untyped, body: untyped): untyped =
@@ -85,17 +103,11 @@ macro class*(head: untyped, body: untyped): untyped =
     allClasses.add(classInfo)
 
     # Find parent class info, if any
-    var parentClassInfo: ClassInfo = nil
-    for inf in allClasses:
-        if eqIdent(inf.classIdent, baseName):
-            parentClassInfo = inf
-            break
-
-    # Warn if not found
+    var parentClassInfo = getClassInfo(baseName, shouldFail = false)
     if parentClassInfo == nil:
 
-        # Create a placeholder
-        warning("The object '" & $baseName & "' is not a class. Your mileage may vary.", baseName)
+        # Warn that parent class was not found.
+        warning("Could not find definition for class '" & $baseName & "'. If this is a nim-style object, your mileage may vary.", baseName)
         parentClassInfo = ClassInfo()
         parentClassInfo.classIdent = baseName
         allClasses.add(parentClassInfo)
@@ -103,6 +115,53 @@ macro class*(head: untyped, body: untyped): untyped =
     # Copy idents from the parent
     classInfo.varIdents.add(parentClassInfo.varIdents)
     classInfo.methodIdents.add(parentClassInfo.methodIdents)
+    classInfo.mixinVars.add(parentClassInfo.mixinVars)
+    classInfo.mixinMethods.add(parentClassInfo.mixinMethods)
+
+    # Gather all mixins
+    for idx, node in body:
+
+        # We're only processing mixins here
+        if node.kind != nnkMixinStmt:
+            continue
+
+        # We have a mixin statement! Get the class name
+        let mixingClassIdent = node[0]
+        if mixingClassIdent.kind != nnkIdent:
+            error("Please specify a class name to mix in.", mixingClassIdent)
+
+        # Find the class definition. It should be in `allClasses` at this point. If not, it hasn't been defined yet.
+        let mixingClassInfo = getClassInfo(mixingClassIdent, shouldFail = true)
+        if showDebugInfo:
+            echo "Injecting variables and methods via mixin from " & $mixingClassIdent
+
+        # Remove this statement
+        body[idx] = newCommentStmtNode("Mixin: " & $mixingClassIdent)
+
+        # Go through mixin class vars
+        for varDef in mixingClassInfo.mixinVars:
+
+            # Inject it!
+            body.add(varDef)
+
+        # Go through mixin class methods
+        for methodDef in mixingClassInfo.mixinMethods: 
+            
+            # Skip init methods, mixin constructors are not supported! Also skip all special class methods
+            if $methodDef.name == "init" or $methodDef.name == "className":
+                continue
+
+            # Inject it!
+            body.add(methodDef)
+
+    
+    # In case this class is used as a mixin, make a copy of all vars and methods
+    for node in body:
+        if node.kind == nnkVarSection: classInfo.mixinVars.add(node.copyNimTree())
+        if node.kind == nnkMethodDef: classInfo.mixinMethods.add(node.copyNimTree())
+            
+
+
 
     # Gather all variable definitions
     for node in body:
