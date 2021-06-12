@@ -57,6 +57,19 @@ assert(DataOnly(v3: "hi", v2: 10).init().v3 == "hi")
 
 
 
+test "Using 'when' inside class body"
+warn "Not implemented yet"
+# class WhenClass:
+
+#     when compileOption("threads"):
+#         var hasThreads = true
+#     else:
+#         var hasThreads = false
+
+# assert(WhenClass.init().hasThreads == compileOption("threads"))
+
+
+
 group "Constructors"
 test "Automatic constructors on the base class"
 class ClassA
