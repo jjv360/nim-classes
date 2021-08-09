@@ -43,7 +43,7 @@ proc getClassInfo(classIdent: NimNode, shouldFail: bool): ClassInfo {.compileTim
 
 
 ## Class definition
-macro class*(head: untyped, body: untyped): untyped =
+macro class*(head: untyped, bodyBase: untyped): untyped =
 
     # Show debug info?
     const showDebugInfo = defined(debugclasses)
@@ -52,6 +52,11 @@ macro class*(head: untyped, body: untyped): untyped =
     # Create new statement list
     if showDebugInfo: echo "\n\n========= Defining a class =========="
     result = newStmtList()
+
+    # Workaround: When using the renamed macros, Nim puts a StmtList inside a StmtList. We can work around that here.
+    var body = bodyBase
+    if body.kind == nnkStmtList and body.len == 1 and body[0].kind == nnkStmtList:
+        body = body[0]
 
     # Check what format was used
     var className: NimNode
@@ -747,6 +752,12 @@ macro class*(head: untyped, body: untyped): untyped =
 
 ## Support for empty class definition
 macro class*(head: untyped): untyped = quote do: class `head`: discard
+
+## Aliases for `class`, this is used in environments where `class` is already defined. For example, the JS backend in Nim 1.4.8
+macro defineClass*(head: untyped, body: untyped): untyped = quote do: class `head`: `body`
+macro defineClass*(head: untyped): untyped = quote do: class `head`: discard
+macro classtype*(head: untyped, body: untyped): untyped = quote do: class `head`: `body`
+macro classtype*(head: untyped): untyped = quote do: class `head`: discard
 
 
 

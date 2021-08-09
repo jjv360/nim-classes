@@ -91,3 +91,7 @@ class Circle of Shape:
 let circle = Circle.init()
 circle.note = "My custom note"
 ```
+
+## Issues
+
+- **JS backend:** As of Nim 1.4.8 (when I last tested), the internal [dom](https://nim-lang.org/docs/dom.html#class%2CNode) library is exposing a `class()` function, and this function always takes precedent over this library's `class` macro. I don't know how to fix this. In the mean time, you can replace the word `class` with any of these options, whichever looks nicest to you: `classes.class`, `defineClass`, or `classtype`

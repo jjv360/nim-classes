@@ -311,6 +311,22 @@ assert(Adv2.init().className == "Adv2")
 
 
 
+test "Alias defineClass, classtype"
+
+defineClass Adv3 of Adv1:
+    var test4 = "Hi"
+assert(Adv3.init().className == "Adv3")
+assert(Adv3.init().test4 == "Hi")
+
+classtype Adv4 of Adv1:
+    var test4 = "Hi"
+assert(Adv4.init().className == "Adv4")
+assert(Adv4.init().test4 == "Hi")
+
+assert(ExternalClassAlias.init().className == "ExternalClassAlias")
+assert(ExternalClassAlias.init().v1 == 5)
+
+
 test "Run an async function"
 
 class AsyncCls:
