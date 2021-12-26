@@ -399,13 +399,14 @@ proc createClassStructure(head: NimNode, body: NimNode, result: NimNode, isSingl
 
 
     # If singleton, add the shared function now
-    let sharedVarName = ident("shared__" & $className)
-    result.add(quote do:
-        var `sharedVarName`: `className` = nil
-        proc shared*(_: type[`className`]): `className` =
-            if `sharedVarName` == nil: `sharedVarName` = `className`.init()
-            return `sharedVarName`
-    )
+    if isSingleton:
+        let sharedVarName = ident("shared__" & $className)
+        result.add(quote do:
+            var `sharedVarName`: `className` = nil
+            proc shared*(_: type[`className`]): `className` =
+                if `sharedVarName` == nil: `sharedVarName` = `className`.init()
+                return `sharedVarName`
+        )
     
 
 
