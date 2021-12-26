@@ -7,3 +7,6 @@ class ExternalClass:
     method test() = discard
 
     method testStatic {.static.} = discard
+
+singleton ExternalSingleton:
+    var v1 = 3

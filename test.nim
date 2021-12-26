@@ -421,6 +421,9 @@ assert(Singleton2.shared.v3 == 5)
 test "Methods"
 assert(Singleton2.shared.myFunc() == 6)
 
+test "External singleton"
+assert(ExternalSingleton.shared.v1 == 3)
+
 
 
 # All tests done

@@ -402,7 +402,7 @@ proc createClassStructure(head: NimNode, body: NimNode, result: NimNode, isSingl
     let sharedVarName = ident("shared__" & $className)
     result.add(quote do:
         var `sharedVarName`: `className` = nil
-        proc shared(_: type[`className`]): `className` =
+        proc shared*(_: type[`className`]): `className` =
             if `sharedVarName` == nil: `sharedVarName` = `className`.init()
             return `sharedVarName`
     )
