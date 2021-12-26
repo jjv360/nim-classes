@@ -1,0 +1,4 @@
+{
+    "image": "nimlang/nim",
+    "extensions": ["kosz78.nim"]
+}

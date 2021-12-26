@@ -389,6 +389,39 @@ assert(mixed8.var0 == 4)
 
 
 
+group "Singletons"
+
+test "Definition"
+
+singleton Singleton1:
+    var v1 = 3
+    var v2 = 0
+    method init() =
+        this.v2 = 4
+
+test "Variables"
+assert(Singleton1.shared.v1 == 3)
+
+test "Init"
+assert(Singleton1.shared.v2 == 4)
+
+singleton Singleton2 of Singleton1:
+    var v3 = 0
+    method init() =
+        super.init()
+        this.v3 = 5
+
+    method myFunc(): int = 6
+
+test "Subclassing"
+assert(Singleton2.shared.v1 == 3)
+assert(Singleton2.shared.v2 == 4)
+assert(Singleton2.shared.v3 == 5)
+
+test "Methods"
+assert(Singleton2.shared.myFunc() == 6)
+
+
 
 # All tests done
 echo ""

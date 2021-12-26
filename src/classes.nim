@@ -41,9 +41,7 @@ proc getClassInfo(classIdent: NimNode, shouldFail: bool): ClassInfo {.compileTim
         return nil
 
 
-
-## Class definition
-macro class*(head: untyped, body: untyped): untyped =
+proc createClassStructure(head: NimNode, body: NimNode, result: NimNode, isSingleton: bool) =
 
     # Show debug info?
     const showDebugInfo = defined(debugclasses)
@@ -51,7 +49,6 @@ macro class*(head: untyped, body: untyped): untyped =
 
     # Create new statement list
     if showDebugInfo: echo "\n\n========= Defining a class =========="
-    result = newStmtList()
 
     # Check what format was used
     var className: NimNode
@@ -400,6 +397,15 @@ macro class*(head: untyped, body: untyped): untyped =
         if showDebugInfo: echo "Adding declaration for " & (if isStatic: "static " else: "") & "method: name=" & $methodNode.name & " args=" & $(methodNode.params.len()-2)
         result.add(methodNode)
 
+
+    # If singleton, add the shared function now
+    let sharedVarName = ident("shared__" & $className)
+    result.add(quote do:
+        var `sharedVarName`: `className` = nil
+        proc shared(_: type[`className`]): `className` =
+            if `sharedVarName` == nil: `sharedVarName` = `className`.init()
+            return `sharedVarName`
+    )
     
 
 
@@ -726,7 +732,7 @@ macro class*(head: untyped, body: untyped): untyped =
         )
 
     # if $className == "AsyncCls":
-    #     echo result.repr
+    # echo result.repr
 
     # Export new keyword which was imported from our lib
     # let newIdent = ident"new"
@@ -745,9 +751,26 @@ macro class*(head: untyped, body: untyped): untyped =
 
 
 
+
+
+## Class definition
+macro class*(head: untyped, body: untyped): untyped =
+
+    # Create class
+    result = newStmtList()
+    createClassStructure(head, body, result, isSingleton=false)
+
+
 ## Support for empty class definition
 macro class*(head: untyped): untyped = quote do: class `head`: discard
 
+
+## Singleton class
+macro singleton*(head: untyped, body: untyped): untyped =
+
+    # Create class
+    result = newStmtList()
+    createClassStructure(head, body, result, isSingleton=true)
 
 
 ## Support for using the `new` keyword

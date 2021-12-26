@@ -90,6 +90,15 @@ class Circle of Shape:
 
 let circle = Circle.init()
 circle.note = "My custom note"
+
+# Singleton classes act the same way as standard classes, but use a .shared() accessor instead of constructors.
+# The default constructor is called the first time the singleton class is accessed.
+singleton MySingletonClass:
+    var v1 = 7
+    method init() = echo "Singleton accessed for the first time!"
+
+# Access the singleton, this also triggers the init() the first time
+echo MySingletonClass.shared.v1
 ```
 
 ## Issues
