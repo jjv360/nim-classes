@@ -125,6 +125,14 @@ proc createClassStructure(head: NimNode, body: NimNode, result: NimNode, isSingl
     #     echo node.treeRepr
     #     quit()
 
+    # If singleton, add the shared function header now
+    if isSingleton:
+        let sharedIdent = ident"shared"
+        let sharedNoVarName = ident"_"
+        result.add(quote do:
+            proc `sharedIdent`*(`sharedNoVarName`: type[`className`]): `className`
+        )
+
     # Gather all mixins
     for idx, node in body:
 
@@ -396,17 +404,6 @@ proc createClassStructure(head: NimNode, body: NimNode, result: NimNode, isSingl
         # Add it
         if showDebugInfo: echo "Adding declaration for " & (if isStatic: "static " else: "") & "method: name=" & $methodNode.name & " args=" & $(methodNode.params.len()-2)
         result.add(methodNode)
-
-
-    # If singleton, add the shared function now
-    if isSingleton:
-        let sharedVarName = ident("shared__" & $className)
-        result.add(quote do:
-            var `sharedVarName`: `className` = nil
-            proc shared*(_: type[`className`]): `className` =
-                if `sharedVarName` == nil: `sharedVarName` = `className`.init()
-                return `sharedVarName`
-        )
     
 
 
@@ -730,6 +727,18 @@ proc createClassStructure(head: NimNode, body: NimNode, result: NimNode, isSingl
     for m in classInfo.methodIdents:
         result.add(quote do:
             export `m`
+        )
+
+    # If singleton, add the shared function implementation now
+    if isSingleton:
+        let sharedIdent = ident"shared"
+        let sharedVarName = ident("internalShared" & $className)
+        let sharedNoVarName = ident"_"
+        result.add(quote do:
+            var `sharedVarName`: `className` = nil
+            proc `sharedIdent`*(`sharedNoVarName`: type[`className`]): `className` =
+                if `sharedVarName` == nil: `sharedVarName` = `className`.init()
+                return `sharedVarName`
         )
 
     # if $className == "AsyncCls":
