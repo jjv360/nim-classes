@@ -43,11 +43,11 @@ proc getClassInfo(classIdent: NimNode, shouldFail: bool): ClassInfo {.compileTim
 
 ## Iterator which traverses nnkStmtList no matter how deeply nested it is
 ## NOTE: I tried implementing this as an iterator which would have been nice, but I can't get around the "recursion is not supported" error
-proc traverseNodeStatements(item: NimNode, callback: proc(index: int, parent: NimNode, node: NimNode)) =
+proc traverseClassStatementList*(item: NimNode, callback: proc(index: int, parent: NimNode, node: NimNode)) =
 
     # Sanity check: Only nnkStmtList must be passed to this function
     if item.kind != nnkStmtList:
-        raiseAssert("Only nnkStmtList nodes can be passed to travrseNodeStatements()")
+        raiseAssert("Only nnkStmtList nodes can be passed to traverseClassStatementList()")
 
     # Go through children
     for idx, childNode in item:
@@ -56,7 +56,7 @@ proc traverseNodeStatements(item: NimNode, callback: proc(index: int, parent: Ni
         if childNode.kind == nnkStmtList:
 
             # It's a nested stmt list! Go deeper
-            traverseNodeStatements(childNode, callback)
+            traverseClassStatementList(childNode, callback)
 
         else:
 
@@ -162,7 +162,7 @@ proc createClassStructure(head: NimNode, bodyNode: NimNode, result: NimNode, isS
         )
 
     # Gather all mixins
-    traverseNodeStatements body, proc(idx: int, parent: NimNode, node: NimNode) =
+    traverseClassStatementList body, proc(idx: int, parent: NimNode, node: NimNode) =
 
         # We're only processing mixins here
         if node.kind != nnkMixinStmt:
@@ -215,7 +215,7 @@ proc createClassStructure(head: NimNode, bodyNode: NimNode, result: NimNode, isS
 
 
     # Gather all variable definitions
-    traverseNodeStatements body, proc(idx: int, parent: NimNode, node: NimNode) =
+    traverseClassStatementList body, proc(idx: int, parent: NimNode, node: NimNode) =
 
         # If they used a "let" instead of a "var", stop right here
         if node.kind == nnkLetSection: error("Variables must be defined with 'var'.", node)
@@ -320,7 +320,7 @@ proc createClassStructure(head: NimNode, bodyNode: NimNode, result: NimNode, isS
 
         # Check if this method signature exists
         var didExist = false
-        traverseNodeStatements body, proc(idx: int, parent: NimNode, node: NimNode) =
+        traverseClassStatementList body, proc(idx: int, parent: NimNode, node: NimNode) =
             if node.kind == nnkMethodDef and $node.name == "init" and node.params.repr == methodNode.params.repr:
                 didExist = true
 
@@ -360,7 +360,7 @@ proc createClassStructure(head: NimNode, bodyNode: NimNode, result: NimNode, isS
 
     # Check if we have at least one init now
     var hasGotInit = false
-    traverseNodeStatements body, proc(idx: int, parent: NimNode, node: NimNode) =
+    traverseClassStatementList body, proc(idx: int, parent: NimNode, node: NimNode) =
         if node.kind == nnkMethodDef and $node.name == "init":
             hasGotInit = true
 
@@ -377,7 +377,7 @@ proc createClassStructure(head: NimNode, bodyNode: NimNode, result: NimNode, isS
 
 
     # Add forward declarations, so that the order of the methods doesn't matter
-    traverseNodeStatements body, proc(idx: int, parent: NimNode, node: NimNode) =
+    traverseClassStatementList body, proc(idx: int, parent: NimNode, node: NimNode) =
 
         # We only care about method definitions right now
         if node.kind != nnkMethodDef: return
@@ -480,7 +480,7 @@ proc createClassStructure(head: NimNode, bodyNode: NimNode, result: NimNode, isS
 
 
     # Add real methods
-    traverseNodeStatements body, proc(i: int, parent: NimNode, node: NimNode) =
+    traverseClassStatementList body, proc(i: int, parent: NimNode, node: NimNode) =
 
         # We only care about method definitions right now
         if node.kind != nnkMethodDef: return
@@ -697,7 +697,7 @@ proc createClassStructure(head: NimNode, bodyNode: NimNode, result: NimNode, isS
         classInfo.methodIdents.add(methodNode.name)
 
     # Add {.base.} to all methods which don't have a super version
-    traverseNodeStatements body, proc(i: int, parent: NimNode, node: NimNode) =
+    traverseClassStatementList body, proc(i: int, parent: NimNode, node: NimNode) =
 
         # We only care about method definitions right now
         if node.kind != nnkMethodDef: return
