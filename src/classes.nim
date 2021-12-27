@@ -139,6 +139,7 @@ proc createClassStructure(head: NimNode, bodyNode: NimNode, result: NimNode, isS
     # Copy idents from the parent
     classInfo.varIdents.add(parentClassInfo.varIdents)
     classInfo.methodIdents.add(parentClassInfo.methodIdents)
+    classInfo.methodDefs.add(parentClassInfo.methodDefs)
     classInfo.mixinVars.add(parentClassInfo.mixinVars)
     classInfo.mixinMethods.add(parentClassInfo.mixinMethods)
 

@@ -149,26 +149,6 @@ assert(ClassWith3Init.init(5, 5, 5, e=4.5, d=3.4).v1 == 15)
 
 
 
-test "Constructor inheritance"
-
-class ClsInit1:
-    var v1 = 1
-    method init() = this.v1 += 2
-
-class ClsInit2 of ClsInit1:
-    method init() =
-        super.init()
-        this.v1 += 3
-
-class ClsInit3 of ClsInit2:
-    method init() =
-        super.init()
-        this.v1 += 4
-
-assert(ClsInit3.init().v1 == 10)
-
-
-
 group "Destructors"
 test "Called on dealloc"
 warn "Not implemented yet"
@@ -217,7 +197,7 @@ CommentB.init().d()
 
 
 
-group "Superclass access"
+group "Inheritance"
 test "Super constructor"
 class WithSuper3:
     var v1 = 5
@@ -243,6 +223,46 @@ class WithSuper2 of WithSuper1:
 
 assert(newWithSuper2().test() == 10)
 assert(newWithSuper2().test2() == 5)
+
+
+
+
+test "Constructor inheritance"
+
+class ClsInit1:
+    var v1 = 1
+    method init() = this.v1 += 2
+
+class ClsInit2 of ClsInit1:
+    method init() =
+        super.init()
+        this.v1 += 3
+
+class ClsInit3 of ClsInit2:
+    method init() =
+        super.init()
+        this.v1 += 4
+
+assert(ClsInit3.init().v1 == 10)
+
+
+
+test "Super call with skipped inheritance"
+
+class TestInheritanceA1:
+    var v1 = 1
+    method increase() = this.v1 += 1
+
+class TestInheritanceA2 of TestInheritanceA1
+
+class TestInheritanceA3 of TestInheritanceA2:
+    method increase() =
+        super.increase()
+        this.v1 += 2
+
+let inheritanceA = TestInheritanceA3.init()
+inheritanceA.increase()
+assert(inheritanceA.v1 == 4)
 
 
 
