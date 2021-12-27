@@ -308,7 +308,10 @@ proc createClassStructure(head: NimNode, bodyNode: NimNode, result: NimNode, isS
 
 
     # Add default constructors for all constructors that don't exist in the subclass but do in the parent class
-    for methodNode in parentClassInfo.methodDefs:
+    for methodNode2 in parentClassInfo.methodDefs:
+
+        # Allow methodNode to be captured
+        let methodNode = methodNode2
 
         # Stop if not an init
         if $methodNode.name != "init":
@@ -316,10 +319,9 @@ proc createClassStructure(head: NimNode, bodyNode: NimNode, result: NimNode, isS
 
         # Check if this method signature exists
         var didExist = false
-        for node in body:
+        traverseNodeStatements body, proc(idx: int, parent: NimNode, node: NimNode) =
             if node.kind == nnkMethodDef and $node.name == "init" and node.params.repr == methodNode.params.repr:
                 didExist = true
-                break
 
         # Stop if exists
         if didExist:
@@ -768,7 +770,7 @@ proc createClassStructure(head: NimNode, bodyNode: NimNode, result: NimNode, isS
         )
 
     # if $className == "AsyncCls":
-    # echo result.repr
+    echo result.repr
 
     # Export new keyword which was imported from our lib
     # let newIdent = ident"new"

@@ -149,6 +149,26 @@ assert(ClassWith3Init.init(5, 5, 5, e=4.5, d=3.4).v1 == 15)
 
 
 
+test "Constructor inheritance"
+
+class ClsInit1:
+    var v1 = 1
+    method init() = this.v1 += 2
+
+class ClsInit2 of ClsInit1:
+    method init() =
+        super.init()
+        this.v1 += 3
+
+class ClsInit3 of ClsInit2:
+    method init() =
+        super.init()
+        this.v1 += 4
+
+assert(ClsInit3.init().v1 == 10)
+
+
+
 group "Destructors"
 test "Called on dealloc"
 warn "Not implemented yet"
@@ -346,6 +366,29 @@ assert(MyProxiedClass.init().checkMe() == 4)
 assert(MyProxiedClass.init().injectedVar == 3)
 assert(MyProxiedClass.init().injectedMethod() == 5)
 assert(MyProxiedClass.init().originalVar == 6)
+
+class2 ProxyClass2 of MyProxiedClass:
+    var v3 = 3
+    method m4(): int = 4
+
+assert(ProxyClass2.init().v3 == 3)
+assert(ProxyClass2.init().m4 == 4)
+
+class2 Cls2Init1:
+    var v1 = 1
+    method init() = this.v1 += 2
+
+class2 Cls2Init2 of Cls2Init1:
+    method init() =
+        super.init()
+        this.v1 += 3
+
+class2 Cls2Init3 of Cls2Init2:
+    method init() =
+        super.init()
+        this.v1 += 4
+
+assert(Cls2Init3.init().v1 == 10)
 
 
 
