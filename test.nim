@@ -1,13 +1,33 @@
 import ./src/classes
-import terminal
 import ExternalClassTest
-import asyncdispatch
 import macros
+import strutils
+
+# Platform specific imports
+when defined(js):
+
+    # Code for Javascript
+    const fgBlue = "\u001b[34m"
+    const fgGreen = "\u001b[32m"
+    const fgRed = "\u001b[31m"
+    const fgDefault = "\u001b[0m"
+    proc styledEcho(v: varargs[string]) = echo v.join("")
+
+    const platformName = "js"
+
+else:
+
+    # Native code
+    import asyncdispatch
+    import terminal
+    
+    const platformName = "native"
+
 
 
 
 # Helpers for testing
-proc group(str: string) = styledEcho "\n", fgBlue, "+ ", fgDefault, str
+proc group(str: string) = styledEcho "\n", fgBlue, "+ ", fgDefault, str, " (" & platformName & " compiler)"
 proc test(str: string) = styledEcho fgGreen, "  + ", fgDefault, str
 proc warn(str: string) = styledEcho fgRed, "    ! ", fgDefault, str
 
@@ -351,16 +371,17 @@ assert(Adv1.init().className == "Adv1")
 assert(Adv2.init().className == "Adv2")
 
 
+when not defined(js):
 
-test "Run an async function"
+    test "Run an async function"
 
-class AsyncCls:
-    method testVoid() {.async.} = discard
-    method testInt(): Future[int] {.async.} = return 3
+    class AsyncCls:
+        method testVoid() {.async.} = discard
+        method testInt(): Future[int] {.async.} = return 3
 
-waitFor AsyncCls.init().testVoid()
-let i: int = waitFor AsyncCls.init().testInt()
-assert(i == 3)
+    waitFor AsyncCls.init().testVoid()
+    let i: int = waitFor AsyncCls.init().testInt()
+    assert(i == 3)
 
 
 
