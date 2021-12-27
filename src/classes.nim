@@ -491,7 +491,7 @@ proc createClassStructure(head: NimNode, bodyNode: NimNode, result: NimNode, isS
         # Check for comment directly above the method, if so copy it into the method, but only if the first entry in the method is not a comment.
         # This is to support the comment style with the comment directly above the method.
         if i > 0 and parent[i-1].kind == nnkCommentStmt and methodNode.body[0].kind != nnkCommentStmt:
-            methodNode.body.insert(0, body[i-1])
+            methodNode.body.insert(0, parent[i-1])
 
         # If this is an init method, add a newClass wrapper function for it
         if $methodNode.name == "init":
@@ -771,7 +771,7 @@ proc createClassStructure(head: NimNode, bodyNode: NimNode, result: NimNode, isS
         )
 
     # if $className == "AsyncCls":
-    # echo result.repr
+    echo result.repr
 
     # Export new keyword which was imported from our lib
     # let newIdent = ident"new"

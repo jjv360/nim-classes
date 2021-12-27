@@ -400,7 +400,11 @@ macro class2(head: untyped, body: untyped): untyped =
             `body`
 
 class2 MyProxiedClass:
+
+    ## Original var
     var originalVar = 6
+
+    ## Original method
     method checkMe(): int = 4
 
 assert(MyProxiedClass.init().checkMe() == 4)
@@ -420,11 +424,15 @@ class2 Cls2Init1:
     method init() = this.v1 += 2
 
 class2 Cls2Init2 of Cls2Init1:
+
+    ## Override init
     method init() =
         super.init()
         this.v1 += 3
 
 class2 Cls2Init3 of Cls2Init2:
+
+    ## Override init again
     method init() =
         super.init()
         this.v1 += 4
