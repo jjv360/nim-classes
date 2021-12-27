@@ -770,7 +770,7 @@ proc createClassStructure(head: NimNode, bodyNode: NimNode, result: NimNode, isS
         )
 
     # if $className == "AsyncCls":
-    echo result.repr
+    # echo result.repr
 
     # Export new keyword which was imported from our lib
     # let newIdent = ident"new"
