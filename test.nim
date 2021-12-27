@@ -2,6 +2,7 @@ import ./src/classes
 import terminal
 import ExternalClassTest
 import asyncdispatch
+import macros
 
 
 
@@ -321,6 +322,30 @@ waitFor AsyncCls.init().testVoid()
 let i: int = waitFor AsyncCls.init().testInt()
 assert(i == 3)
 
+
+
+test "Proxied macro"
+
+macro class2(head: untyped, body: untyped): untyped = 
+
+    # TODO: Why does Nim put a `gensym123 suffix only on the injected variable, and not the injected method???
+    let injectedVar = ident"injectedVar"
+    
+    # let injectedVar
+    return quote do: 
+        class `head`: 
+            var `injectedVar`: int = 3
+            method injectedMethod(): int = 5
+            `body`
+
+class2 MyProxiedClass:
+    var originalVar = 6
+    method checkMe(): int = 4
+
+assert(MyProxiedClass.init().checkMe() == 4)
+assert(MyProxiedClass.init().injectedVar == 3)
+assert(MyProxiedClass.init().injectedMethod() == 5)
+assert(MyProxiedClass.init().originalVar == 6)
 
 
 

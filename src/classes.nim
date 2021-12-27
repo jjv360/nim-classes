@@ -41,7 +41,34 @@ proc getClassInfo(classIdent: NimNode, shouldFail: bool): ClassInfo {.compileTim
         return nil
 
 
-proc createClassStructure(head: NimNode, body: NimNode, result: NimNode, isSingleton: bool) =
+## Iterator which traverses nnkStmtList no matter how deeply nested it is
+## NOTE: I tried implementing this as an iterator which would have been nice, but I can't get around the "recursion is not supported" error
+proc traverseNodeStatements(item: NimNode, callback: proc(index: int, parent: NimNode, node: NimNode)) =
+
+    # Sanity check: Only nnkStmtList must be passed to this function
+    if item.kind != nnkStmtList:
+        raiseAssert("Only nnkStmtList nodes can be passed to travrseNodeStatements()")
+
+    # Go through children
+    for idx, childNode in item:
+
+        # Check node kind
+        if childNode.kind == nnkStmtList:
+
+            # It's a nested stmt list! Go deeper
+            traverseNodeStatements(childNode, callback)
+
+        else:
+
+            # Not a stmt list, yield this one
+            callback(idx, item, childNode)
+
+
+## Create the code for the class
+proc createClassStructure(head: NimNode, bodyNode: NimNode, result: NimNode, isSingleton: bool) =
+
+    # Make input vars assignable
+    var body = bodyNode
 
     # Show debug info?
     const showDebugInfo = defined(debugclasses)
@@ -134,11 +161,11 @@ proc createClassStructure(head: NimNode, body: NimNode, result: NimNode, isSingl
         )
 
     # Gather all mixins
-    for idx, node in body:
+    traverseNodeStatements body, proc(idx: int, parent: NimNode, node: NimNode) =
 
         # We're only processing mixins here
         if node.kind != nnkMixinStmt:
-            continue
+            return
 
         # We have a mixin statement! Get the class name
         let mixingClassIdent = node[0]
@@ -151,7 +178,7 @@ proc createClassStructure(head: NimNode, body: NimNode, result: NimNode, isSingl
             echo "Injecting variables and methods via mixin from " & $mixingClassIdent
 
         # Remove this statement
-        body[idx] = newCommentStmtNode("Mixin: " & $mixingClassIdent)
+        parent[idx] = newCommentStmtNode("Mixin: " & $mixingClassIdent)
 
         # Go through mixin class vars
         for varDef in mixingClassInfo.mixinVars:
@@ -187,13 +214,13 @@ proc createClassStructure(head: NimNode, body: NimNode, result: NimNode, isSingl
 
 
     # Gather all variable definitions
-    for node in body:
+    traverseNodeStatements body, proc(idx: int, parent: NimNode, node: NimNode) =
 
         # If they used a "let" instead of a "var", stop right here
         if node.kind == nnkLetSection: error("Variables must be defined with 'var'.", node)
 
         # We only care about variable definitions right now
-        if node.kind != nnkVarSection: continue
+        if node.kind != nnkVarSection: return
         
         # Copy the IdentDefs for this var section into this object
         for identDef in node:
@@ -259,7 +286,7 @@ proc createClassStructure(head: NimNode, body: NimNode, result: NimNode, isSingl
             # Skip if this variable has been defined on the base class already
             if classInfo.varIdents.anyIt(it == nameNode):
                 if showDebugInfo: echo "Skipping class var '" & $nameNode & "' because it was already defined on a superclass."
-                continue
+                return
 
             # Check if they don't want us to define it
             var dontDefine = false
@@ -330,10 +357,9 @@ proc createClassStructure(head: NimNode, body: NimNode, result: NimNode, isSingl
 
     # Check if we have at least one init now
     var hasGotInit = false
-    for node in body:
+    traverseNodeStatements body, proc(idx: int, parent: NimNode, node: NimNode) =
         if node.kind == nnkMethodDef and $node.name == "init":
             hasGotInit = true
-            break
 
     # If not, create a blank one
     if not hasGotInit:
@@ -348,10 +374,10 @@ proc createClassStructure(head: NimNode, body: NimNode, result: NimNode, isSingl
 
 
     # Add forward declarations, so that the order of the methods doesn't matter
-    for node in body:
+    traverseNodeStatements body, proc(idx: int, parent: NimNode, node: NimNode) =
 
         # We only care about method definitions right now
-        if node.kind != nnkMethodDef: continue
+        if node.kind != nnkMethodDef: return
 
         # Store this method def
         let copiedDef = copyNimTree(node)
@@ -451,17 +477,17 @@ proc createClassStructure(head: NimNode, body: NimNode, result: NimNode, isSingl
 
 
     # Add real methods
-    for i, node in body:
+    traverseNodeStatements body, proc(i: int, parent: NimNode, node: NimNode) =
 
         # We only care about method definitions right now
-        if node.kind != nnkMethodDef: continue
+        if node.kind != nnkMethodDef: return
 
         # Get method + body
         var methodNode = copyNimTree(node)
 
         # Check for comment directly above the method, if so copy it into the method, but only if the first entry in the method is not a comment.
-        # This is to support the comment style with the comment directly above the class.
-        if i > 0 and body[i-1].kind == nnkCommentStmt and methodNode.body[0].kind != nnkCommentStmt:
+        # This is to support the comment style with the comment directly above the method.
+        if i > 0 and parent[i-1].kind == nnkCommentStmt and methodNode.body[0].kind != nnkCommentStmt:
             methodNode.body.insert(0, body[i-1])
 
         # If this is an init method, add a newClass wrapper function for it
@@ -668,10 +694,10 @@ proc createClassStructure(head: NimNode, body: NimNode, result: NimNode, isSingl
         classInfo.methodIdents.add(methodNode.name)
 
     # Add {.base.} to all methods which don't have a super version
-    for i, node in body:
+    traverseNodeStatements body, proc(i: int, parent: NimNode, node: NimNode) =
 
         # We only care about method definitions right now
-        if node.kind != nnkMethodDef: continue
+        if node.kind != nnkMethodDef: return
 
         # Find matching function in parent class
         var superMethodDef : NimNode = nil
@@ -682,7 +708,7 @@ proc createClassStructure(head: NimNode, body: NimNode, result: NimNode, isSingl
 
         # Stop if found
         if superMethodDef != nil:
-            continue
+            return
 
         # This is a base method. First check if it has the {.base.} pragma already
         var hasBasePragma = false
@@ -693,7 +719,7 @@ proc createClassStructure(head: NimNode, body: NimNode, result: NimNode, isSingl
 
         # Stop if already has it
         if hasBasePragma:
-            continue
+            return
 
         # We need to add base pragma, find all methods with this name
         var addCount = 0
