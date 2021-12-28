@@ -169,6 +169,19 @@ assert(ClassWith3Init.init(5, 5, 5, e=4.5, d=3.4).v1 == 15)
 
 
 
+test "Factory method"
+
+class ClassWithFactory:
+    var v1 = 0
+    method withValue(v: int): ClassWithFactory {.static.} =
+        let n = ClassWithFactory.init()
+        n.v1 = v
+        return n
+
+assert(ClassWithFactory.withValue(3).v1 == 3)
+
+
+
 group "Destructors"
 test "Called on dealloc"
 warn "Not implemented yet"
