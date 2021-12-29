@@ -359,6 +359,36 @@ assert(NimClass4().init().v1 == "hi")
 
 
 
+test "Type checking at compile time"
+
+class InheritedFromNimClassA1 of NimClass
+class InheritedFromNimClassA2 of InheritedFromNimClassA1
+class InheritedFromNimClassA3 of InheritedFromNimClassA2
+class InheritedClassB1
+class InheritedClassB2 of InheritedClassB1
+class InheritedClassB3 of InheritedClassB2
+
+assert(InheritedFromNimClassA3.init() is NimClass == true)
+assert(InheritedFromNimClassA3.init() is InheritedFromNimClassA1 == true)
+assert(InheritedFromNimClassA3.init() is InheritedFromNimClassA2 == true)
+assert(InheritedFromNimClassA3.init() is InheritedFromNimClassA3 == true)
+assert(InheritedFromNimClassA3.init() is InheritedClassB1 == false)
+assert(InheritedClassB3.init() is InheritedClassB1 == true)
+assert(InheritedClassB3.init() is InheritedClassB2 == true)
+assert(InheritedClassB3.init() is InheritedClassB3 == true)
+assert(InheritedClassB3.init() is InheritedFromNimClassA3 == false)
+
+
+
+test "Type checking at run time"
+
+var inheritedInVariable: InheritedClassB1 = InheritedClassB3.init()
+assert(inheritedInVariable of InheritedFromNimClassA3 == false)
+assert(inheritedInVariable of InheritedClassB1 == true)
+assert(inheritedInVariable of InheritedClassB2 == true)
+assert(inheritedInVariable of InheritedClassB3 == true)
+
+
 
 
 
