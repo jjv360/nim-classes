@@ -427,7 +427,7 @@ proc createClassStructure(head: NimNode, bodyNode: NimNode, result: NimNode, isS
         #     methodNode.pragma.add(newNimNode(nnkPragma).add(ident"base"))
 
         # Make sure it's exported
-        if methodNode[0].kind == nnkIdent:
+        if methodNode[0].kind == nnkIdent or methodNode[0].kind == nnkAccQuoted:
             methodNode[0] = newTree(nnkPostfix, ident"*", methodNode[0])
 
         # Add it
@@ -688,7 +688,7 @@ proc createClassStructure(head: NimNode, bodyNode: NimNode, result: NimNode, isS
 
 
         # Make sure it's exported
-        if methodNode[0].kind == nnkIdent:
+        if methodNode[0].kind == nnkIdent or methodNode[0].kind == nnkAccQuoted:
             methodNode[0] = newTree(nnkPostfix, ident"*", methodNode[0])
 
         # Add it
@@ -770,8 +770,8 @@ proc createClassStructure(head: NimNode, bodyNode: NimNode, result: NimNode, isS
                 return `sharedVarName`
         )
 
-    # if $className == "AsyncCls":
-    # echo result.repr
+    # if $className == "ExternalClass":
+    #     echo result.repr
 
     # Export new keyword which was imported from our lib
     # let newIdent = ident"new"

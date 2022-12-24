@@ -101,6 +101,10 @@ let customGetterSetter = CustomGetterSetter.init()
 customGetterSetter.v2 = 7
 assert(customGetterSetter.v2 == 7)
 
+let externalGetterSetter = ExternalClass.init()
+externalGetterSetter.testCustomSetter = 8
+assert(externalGetterSetter.testCustomSetter == 8)
+
 
 
 
