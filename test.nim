@@ -91,6 +91,19 @@ warn "Not implemented yet"
 
 
 
+test "Getters and setters"
+class CustomGetterSetter:
+    var v2private = 6
+    method v2(): int = this.v2private
+    method `v2=`(v: int) = this.v2private = v
+
+let customGetterSetter = CustomGetterSetter.init()
+customGetterSetter.v2 = 7
+assert(customGetterSetter.v2 == 7)
+
+
+
+
 group "Constructors"
 test "Automatic constructors on the base class"
 class ClassA
