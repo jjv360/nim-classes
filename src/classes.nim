@@ -377,6 +377,7 @@ proc createClassStructure(head: NimNode, bodyNode: NimNode, result: NimNode, isS
 
 
     # Add forward declarations, so that the order of the methods doesn't matter
+    var lastForwardDeclarationIndex = 1
     traverseClassStatementList body, proc(idx: int, parent: NimNode, node: NimNode) =
 
         # We only care about method definitions right now
@@ -433,6 +434,7 @@ proc createClassStructure(head: NimNode, bodyNode: NimNode, result: NimNode, isS
         # Add it
         if showDebugInfo: echo "Adding declaration for " & (if isStatic: "static " else: "") & "method: name=" & $methodNode.name & " args=" & $(methodNode.params.len()-2)
         result.add(methodNode)
+        lastForwardDeclarationIndex = result.len
     
 
 
@@ -526,8 +528,8 @@ proc createClassStructure(head: NimNode, bodyNode: NimNode, result: NimNode, isS
                     # Add to template's function call
                     newFunc[6][0].add(paramIdent)
 
-            # Done, add it
-            result.add(newFunc)
+            # Done, insert it after the forward declarations
+            result.insert(lastForwardDeclarationIndex, newFunc)
 
         # If this is an init method, add a Class.init() wrapper function for it. 
         # NOTE: We can use this for static methods!
@@ -564,9 +566,8 @@ proc createClassStructure(head: NimNode, bodyNode: NimNode, result: NimNode, isS
                     # Add to template's function call
                     newFunc[6][0].add(paramIdent)
 
-            # Done, add it
-            result.add(newFunc)
-            # echo newFunc.repr
+            # Done, insert it after the forward declarations
+            result.insert(lastForwardDeclarationIndex, newFunc)
 
         # If this is an init method, add a Class.new() wrapper function for it.
         if $methodNode.name == "init":
@@ -607,10 +608,8 @@ proc createClassStructure(head: NimNode, bodyNode: NimNode, result: NimNode, isS
                     # Add to template's function call
                     newFunc[6][1][0].add(paramIdent)
 
-            # Done, add it
-            result.add(newFunc)
-            # echo newFunc.repr
-            # if $className == "DialerWindow": quit()
+            # Done, insert it after the forward declarations
+            result.insert(lastForwardDeclarationIndex, newFunc)
 
         # Check if it's static ... would have been nice to use hasCustomPragma() here?
         var isStatic = false
@@ -770,7 +769,7 @@ proc createClassStructure(head: NimNode, bodyNode: NimNode, result: NimNode, isS
                 return `sharedVarName`
         )
 
-    # if $className == "ExternalClass":
+    # if $className == "ClassConstr1":
     #     echo result.repr
 
     # Export new keyword which was imported from our lib

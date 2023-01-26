@@ -186,6 +186,19 @@ assert(ClassWith3Init.init(5, 5, 5, e=4.5, d=3.4).v1 == 15)
 
 
 
+test "Constructor ordering"
+
+class ClassConstr1:
+    var v1 = 2
+    method makeCopy(): ClassConstr1 =
+        let n = ClassConstr1.init()
+        return n
+    method init() = discard
+
+assert(ClassConstr1.init().makeCopy().v1 == 2)
+
+
+
 test "Factory method"
 
 class ClassWithFactory:
