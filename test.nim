@@ -355,6 +355,7 @@ class WithStatic:
     method staticFunc2() {.used, static.} = discard
 
 WithStatic.staticFunc()
+WithStatic.staticFunc()     # <-- Calling it twice
 
 
 

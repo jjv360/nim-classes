@@ -403,11 +403,10 @@ proc createClassStructure(head: NimNode, bodyNode: NimNode, result: NimNode, isS
         if isStatic:
 
             # Inject unused typedesc placeholder as the first param
-            let underscore = ident"_"
-            let vv = quote do:
-                proc a(`underscore`: typedesc[`className`])
-
-            methodNode.params.insert(1, vv.params[1])
+            let classTypedesc = newNimNode(nnkBracketExpr)
+            classTypedesc.add(ident"typedesc")
+            classTypedesc.add(className)
+            methodNode.params.insert(1, newIdentDefs(ident"_", classTypedesc))
 
         else:
 
@@ -622,11 +621,10 @@ proc createClassStructure(head: NimNode, bodyNode: NimNode, result: NimNode, isS
         if isStatic:
 
             # Inject unused typedesc placeholder as the first param
-            let underscore = ident"_"
-            let vv = quote do:
-                proc a(`underscore`: typedesc[`className`])
-
-            methodNode.params.insert(1, vv.params[1])
+            let classTypedesc = newNimNode(nnkBracketExpr)
+            classTypedesc.add(ident"typedesc")
+            classTypedesc.add(className)
+            methodNode.params.insert(1, newIdentDefs(ident"_", classTypedesc))
 
         else:
 
@@ -769,7 +767,34 @@ proc createClassStructure(head: NimNode, bodyNode: NimNode, result: NimNode, isS
                 return `sharedVarName`
         )
 
-    # if $className == "ClassConstr1":
+    # Workaround: Replace all static methods with procs instead, since there's an odd bug where Nim 
+    # will duplicate the function definition in this exact condition:
+    # - Compiling to native (not JS)
+    # - Function is a `method`
+    # - There's a typedesc[] param type
+    #
+    # It's mostly safe to use procs I think for static methods, can't think of a reason not to... They don't have a `this` anyway.
+    for idx, child in result:
+
+        # Check type (remember first param is the return type)
+        if child.kind == nnkMethodDef and $child.params[1][0] == "_" and child.params[1][1].kind == nnkBracketExpr and $child.params[1][1][0] == "typedesc" and child.params[1][1][1] == className:
+
+            # This is a static method, replace with proc
+            let original = child
+            let copy = newNimNode(nnkProcDef)
+            copyChildrenTo(original, copy)
+            result[idx] = copy
+
+            # Remove base pragma, which doesn't apply to procs
+            var idx2 = 0
+            while idx2 < copy.pragma.len:
+                let pragmaItem = copy.pragma[idx2]
+                if pragmaItem.kind == nnkIdent and $pragmaItem == "base":
+                    copy.pragma.del(idx2)
+                    idx2 -= 1
+                idx2 += 1
+
+    # if $className == "WithStatic":
     #     echo result.repr
 
     # Export new keyword which was imported from our lib
