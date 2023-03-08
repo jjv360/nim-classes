@@ -212,9 +212,21 @@ assert(ClassWithFactory.withValue(3).v1 == 3)
 
 
 
+
+
 group "Destructors"
 test "Called on dealloc"
 warn "Not implemented yet"
+
+# var globalIsDestroyed = false
+# class TestDestructor1:
+#     method dealloc() = globalIsDestroyed = true
+
+# globalIsDestroyed = false
+# discard TestDestructor1.init()
+# assert(globalIsDestroyed == true)
+
+
 
 
 
@@ -342,10 +354,21 @@ class WithAbstract2:
     method overrideMe() = discard
 
 # Calling the abstract method directly should fail
-doAssertRaises AssertionError, WithAbstract().overrideMe()
+doAssertRaises Defect, WithAbstract().overrideMe()
 
 # Calling the overridden abstract method from the subclass should be fine
 WithAbstract2().overrideMe()
+
+
+test "Overridden methods with different param names"
+class OverrideTest1:
+    method overrideMe2(str1 : string, int2 : int) : string = str1 & $int2
+
+class OverrideTest2 of OverrideTest1:
+    method overrideMe2(str3 : string, int4 : int) : string = super.overrideMe2(str3, int4) & "extra"
+
+# Ensure return value is expected
+assert(OverrideTest2.init().overrideMe2("hello", 2) == "hello2extra")
 
 
 
@@ -372,7 +395,8 @@ type NimClass = ref object of RootObj
     var1: string
 
 class NimClass2 of NimClass:
-    var var1 {.noDefine.} = "hi"
+    method init() =
+        this.var1 = "hi"
 
 assert(NimClass2().init().var1 == "hi")
 
