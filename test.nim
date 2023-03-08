@@ -20,6 +20,8 @@ else:
     # Native code
     import asyncdispatch
     import terminal
+    import os
+    import times
     
     const platformName = "native"
 
@@ -108,7 +110,7 @@ assert(externalGetterSetter.testCustomSetter == 8)
 
 
 
-group "Constructors"
+group "Constructors and destructors"
 test "Automatic constructors on the base class"
 class ClassA
 
@@ -211,33 +213,47 @@ class ClassWithFactory:
 assert(ClassWithFactory.withValue(3).v1 == 3)
 
 
-test "Destructor called"
+test "Destructors"
 
-# # Counter to store destructor call count
-# var globalDestructorCounter = 1
+when defined(js):
 
-# # Simple destructor
-# class TestDestructor1:
-#     method deinit() = globalDestructorCounter += 1
+    # Not supported
+    warn "Not supported in Javascript"
 
-# # Class with destructor in the superclass
-# class TestDestructor2 of TestDestructor1
+else:
 
-# # Class with custom destructor
-# class TestDestructor3 of TestDestructor1:
-#     method deinit() = 
-#         super.deinit()
-#         globalDestructorCounter += 1    # <-- Add again
+    # Counter to store destructor call count
+    var globalDestructorCounter = 1
 
-# # Run all destructors
-# proc checkDestructor() =
-#     let cls = TestDestructor1.init()    # <-- Destructor adds one
-#     discard TestDestructor2.init()      # <-- Destructor in superclass adds one
-#     discard TestDestructor3.init()      # <-- Destructor adds one + calls super destructor which also adds one
-# checkDestructor()
+    # Simple destructor
+    class TestDestructor1:
+        method deinit() = globalDestructorCounter += 1
 
-# # Ensure the counter is correct
-# assert(globalDestructorCounter == 5)
+    # Class with destructor in the superclass
+    class TestDestructor2 of TestDestructor1
+
+    # Class with custom destructor
+    class TestDestructor3 of TestDestructor1:
+        method deinit() = 
+            super.deinit()
+            globalDestructorCounter += 1    # <-- Add again
+
+    # Create objects to be cleaned up
+    proc checkDestructor() =
+        let cls = TestDestructor1.init()    # <-- Destructor adds one
+        let cls2 = TestDestructor2.init()      # <-- Destructor in superclass adds one
+        let cls3 = TestDestructor3.init()      # <-- Destructor adds one + calls super destructor which also adds one
+    checkDestructor()
+
+    # GC takes a while, wait for it to be done
+    let startedAt = cpuTime()
+    while true:
+        if globalDestructorCounter == 5 or startedAt - cpuTime() > 10: break
+        GC_fullCollect()
+        sleep(100)
+
+    # Ensure the counter is correct
+    assert(globalDestructorCounter == 5, "Expected 5 but got " & $globalDestructorCounter)
 
 
 

@@ -18,13 +18,15 @@ proc generateDestructor(classDef : ClassDescription) =
     if not m.existsIn(classDef):
         return
 
-    # It exists, add destroy method
-    let thisName = ident"this"
+    # It exists, add destroy proc.
+    # Note: The way this works is that we receive a reference to the actual underlying object, unwrapped from
+    # any refs. So we need to wrap it again for the final deinit call.
     let methodName = parseExpr("`=destroy`")
     let className = classDef.name
     classDef.outputBody.insert(0, quote do:
-        proc `methodName`*(`thisName`: var typeof(`className`()[])) =
-            `thisName`.deinit()
+        proc `methodName`*(thisRaw: var typeof(`className`()[])) =
+            var this : `className` = cast[`className`](thisRaw.addr)
+            this.deinit()
     )
     
 

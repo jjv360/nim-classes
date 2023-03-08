@@ -11,7 +11,7 @@ import ./classes/plugin_super
 import ./classes/plugin_meta
 import ./classes/plugin_mixins
 import ./classes/plugin_singleton
-# import ./classes/plugin_destructors
+import ./classes/plugin_destructors
 export static
 
 ## Class definition

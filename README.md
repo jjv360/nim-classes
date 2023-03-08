@@ -28,8 +28,8 @@ class Shape:
     method init() =
         echo "Creating a Shape"
 
-    ## Optional destructor (not implemented yet)
-    method destroy() =
+    ## Optional destructor (not supported in JS)
+    method deinit() =
         echo "Destroying a Shape"
 
     ## Abstract draw function
