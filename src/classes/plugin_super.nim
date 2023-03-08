@@ -57,7 +57,7 @@ proc replaceSuperCalls(classDef : ClassDescription) =
     for methodDef in methods.definitions:
 
         # Skip for static methods
-        if methodDef.isStatic:
+        if methodDef.isStatic or methodDef.insertUnmodified:
             continue
 
         # Modify all super calls and add "procCall" to them
@@ -78,6 +78,6 @@ proc replaceSuperCalls(classDef : ClassDescription) =
 ## Register the plugin at compile-time
 static:
     classCompilerPlugins.add(proc(stage : ClassCompilerStage, classDef : ClassDescription) =
-        if stage == ClassCompilerModifyDefinition3: replaceSuperCalls(classDef)
+        if stage == ClassCompilerModifyDefinitions: replaceSuperCalls(classDef)
     )
 

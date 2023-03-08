@@ -21,11 +21,14 @@ type Method* = ref object of RootRef
     ## Body (nnkStmtList)
     body* : NimNode
 
+    ## The generated method within `outputBody`
+    outputCode* : NimNode
+
     ## True if it's a static method
     isStatic* : bool
 
-    ## True if the method has already been modified
-    hasModified : bool
+    ## If true, we won't insert 'this' first param when the code is generated
+    insertUnmodified* : bool
 
 
 ## Clone a method definition
@@ -36,7 +39,7 @@ proc clone*(this : Method) : Method =
     methodCopy.definition = copyNimTree(this.definition)
     methodCopy.body = copyNimTree(this.body)
     methodCopy.comment = copyNimTree(this.comment)
-    methodCopy.hasModified = this.hasModified
+    methodCopy.insertUnmodified = this.insertUnmodified
     methodCopy.isStatic = this.isStatic
 
     # Unbind all symbols
@@ -86,7 +89,6 @@ proc hash*(this : Method) : string =
     var firstParamDone = false
     for i, param in this.definition.params:
         if i == 0: continue     # <-- Skip return type
-        if i == 1 and ($param.variableName == "this" or $param.variableName == "_"): continue     # <-- Skip 'this'
         if firstParamDone: hash &= ","
         firstParamDone = true
         hash &= param[1].repr
@@ -100,7 +102,7 @@ proc hash*(this : Method) : string =
     return hash
 
 
-## Return true if the class definition contains a matching method
+## Return true if the class definition contains a matching method itself or in any of it's superclasses
 proc existsIn*(this : Method, classDef : ClassDescription) : bool =
 
     # Compare and find hashes
@@ -172,80 +174,47 @@ proc gatherDefinitions(classDef : ClassDescription) =
             previousComment = nil
 
 
-## Insert "this" param in all methods
-proc insertThisParam(classDef : ClassDescription) =
-
-    # Go through all methods
-    for methodDef in classDef.methods.definitions:
-
-        # Stop if already modified
-        if methodDef.hasModified:
-            continue
-
-        # Check if static
-        if methodDef.isStatic:
-
-            # Inject typedesc as the first param on static methods
-            let classTypedesc = newNimNode(nnkBracketExpr)
-            classTypedesc.add(ident"typedesc")
-            classTypedesc.add(classDef.name)
-            methodDef.definition.params.insert(1, newIdentDefs(ident"_", classTypedesc))
-
-            # Make it a proc instead of a method
-            let original = methodDef.definition
-            let copy = newNimNode(nnkProcDef)
-            copyChildrenTo(original, copy)
-            methodDef.definition = copy
-
-        else:
-
-            # Inject the `this` parameter as the first argument
-            methodDef.definition.params.insert(1, newIdentDefs(ident"this", classDef.name))
-
-        # Done
-        methodDef.hasModified = true
-
-
 ## Generate forward declarations for all methods
-proc generateForwardDeclarations(classDef : ClassDescription) =
+proc generateCode(classDef : ClassDescription) =
 
     # Add declaration for each method
     for methodDef in classDef.methods.definitions:
 
         # Make a copy of the definition
-        let methodCopy = copyNimTree(methodDef.definition)
+        var methodCopy = copyNimTree(methodDef.definition)
 
         # Mark as base method if needed, ie if not static and there's no super method
-        if not methodDef.isStatic and not methodDef.existsIn(classDef.superClass):
+        if not methodDef.insertUnmodified and not methodDef.isStatic and not methodDef.existsIn(classDef.superClass):
             methodCopy.addPragma(ident"base")
 
-        # Output it
-        classDef.output.add(methodCopy)
+        # Insert 'this'
+        if not methodDef.insertUnmodified and methodDef.isStatic:
 
+            # Inject typedesc as the first param on static methods
+            let classTypedesc = newNimNode(nnkBracketExpr)
+            classTypedesc.add(ident"typedesc")
+            classTypedesc.add(classDef.name)
+            methodCopy.params.insert(1, newIdentDefs(ident"_", classTypedesc))
 
-## Generate actual definitions for all methods
-proc generateMethods(classDef : ClassDescription) =
+            # Make it a proc instead of a method
+            let original = methodCopy
+            let copy = newNimNode(nnkProcDef)
+            copyChildrenTo(original, copy)
+            methodCopy = copy
 
-    # Add each method
-    for methodDef in classDef.methods.definitions:
+        elif not methodDef.insertUnmodified:
 
-        # Make a copy and add the body back in
-        var methodCopy = copyNimTree(methodDef.definition)
-        methodCopy.body = copyNimTree(methodDef.body)
+            # Inject the `this` parameter as the first argument
+            methodCopy.params.insert(1, newIdentDefs(ident"this", classDef.name))
 
-        # # Find matching method in the superclass
-        # var superMethod : Method = nil
-        # for superMethodDef in classDef.superClass.methods.definitions:
-        #     if $superMethodDef.definition.name == $methodDef.definition.name and superMethodDef.definition.params.repr == methodDef.definition.params.repr:
-        #         superMethod = superMethodDef
-        #         break
+        # Output the forward declaration
+        classDef.outputForwardDeclarations.add(methodCopy)
 
-        # # Mark as base method if needed, ie if not static and there's no super method
-        # if not methodDef.isStatic and superMethod == nil:
-        #     methodCopy.addPragma(ident"base")
-        
-        # Output it
-        classDef.output.add(methodCopy)
+        # Make another copy, this time with the full body
+        var methodWithBody = copyNimTree(methodCopy)
+        methodWithBody.body = copyNimTree(methodDef.body)
+        classDef.outputBody.add(methodWithBody)
+        methodDef.outputCode = methodWithBody
 
 
 ## Log class info
@@ -265,9 +234,7 @@ proc debugEcho(classDef : ClassDescription) =
 static:
     classCompilerPlugins.add(proc(stage : ClassCompilerStage, classDef : ClassDescription) =
         if stage == ClassCompilerGatherDefinitions: gatherDefinitions(classDef)
-        if stage == ClassCompilerModifyDefinition2: insertThisParam(classDef)
-        if stage == ClassCompilerGenerateOutput1: generateForwardDeclarations(classDef)
-        if stage == ClassCompilerGenerateOutput3: generateMethods(classDef)
+        if stage == ClassCompilerGenerateCode: generateCode(classDef)
         if stage == ClassCompilerDebugEcho: debugEcho(classDef)
     )
 

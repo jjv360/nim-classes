@@ -32,16 +32,19 @@ type ClassDescription* = ref object of RootRef
     ## Extra properties used by plugins
     metadata* : Table[string, RootRef]
 
-    ## Code to output before the class type definition, if any (nnkStmtList)
+    ## Code to output before the class type definition (nnkStmtList)
     outputPrefix* : NimNode
 
     ## Code to generate the object definition
     outputObject* : NimNode
 
-    ## Class definition code (nnkStmtList)
-    output* : NimNode
+    ## Forward declarations (nnkStmtList)
+    outputForwardDeclarations* : NimNode
 
-    ## Code to output after the class type definition, if any (nnkStmtList)
+    ## Actual methods (nnkStmtList)
+    outputBody* : NimNode
+
+    ## Code to output after the class type definition (nnkStmtList)
     outputSuffix* : NimNode
 
 
@@ -54,22 +57,14 @@ type ClassCompilerStage* = enum
     ## Called to gather definitions from the class body
     ClassCompilerGatherDefinitions
 
-    ## Called after we've collected the class definition
-    ClassCompilerCollectedDefinition
+    ## Called after we've collected the class definition, this step allows plugins to add extra methods and vars
+    ClassCompilerAddExtraDefinitions
 
     ## Called to allow plugins to modify the class before the output is generated
-    ClassCompilerModifyDefinition1
-    ClassCompilerModifyDefinition2
-    ClassCompilerModifyDefinition3
-    ClassCompilerModifyDefinition4
-    ClassCompilerModifyDefinition5
+    ClassCompilerModifyDefinitions
 
     ## Called to allow plugins to generate the code output in stages
-    ClassCompilerGenerateOutput1
-    ClassCompilerGenerateOutput2
-    ClassCompilerGenerateOutput3
-    ClassCompilerGenerateOutput4
-    ClassCompilerGenerateOutput5
+    ClassCompilerGenerateCode
 
     ## Called after code has been generated
     ClassCompilerFinalize
@@ -141,7 +136,8 @@ proc newClassDescription*(macroName : string, head : NimNode, body : NimNode) : 
     classDef.originalHead = head
     classDef.originalBody = body
     classDef.outputPrefix = newNimNode(nnkStmtList)
-    classDef.output = newNimNode(nnkStmtList)
+    classDef.outputForwardDeclarations = newNimNode(nnkStmtList)
+    classDef.outputBody = newNimNode(nnkStmtList)
     classDef.outputSuffix = newNimNode(nnkStmtList)
 
     # Get class name and parent
@@ -173,12 +169,8 @@ proc newClassDescription*(macroName : string, head : NimNode, body : NimNode) : 
     # Call plugin stages
     for plugin in classCompilerPlugins: plugin(ClassCompilerPreload, classDef)
     for plugin in classCompilerPlugins: plugin(ClassCompilerGatherDefinitions, classDef)
-    for plugin in classCompilerPlugins: plugin(ClassCompilerModifyDefinition1, classDef)
-    for plugin in classCompilerPlugins: plugin(ClassCompilerModifyDefinition2, classDef)
-    for plugin in classCompilerPlugins: plugin(ClassCompilerModifyDefinition3, classDef)
-    for plugin in classCompilerPlugins: plugin(ClassCompilerModifyDefinition4, classDef)
-    for plugin in classCompilerPlugins: plugin(ClassCompilerModifyDefinition5, classDef)
-    for plugin in classCompilerPlugins: plugin(ClassCompilerCollectedDefinition, classDef)
+    for plugin in classCompilerPlugins: plugin(ClassCompilerAddExtraDefinitions, classDef)
+    for plugin in classCompilerPlugins: plugin(ClassCompilerModifyDefinitions, classDef)
 
     # Create class object definition header
     let className = classDef.name
@@ -187,28 +179,36 @@ proc newClassDescription*(macroName : string, head : NimNode, body : NimNode) : 
         type `className`* = ref object of `parentName`
 
     # Call plugin stages
-    for plugin in classCompilerPlugins: plugin(ClassCompilerGenerateOutput1, classDef)
-    for plugin in classCompilerPlugins: plugin(ClassCompilerGenerateOutput2, classDef)
-    for plugin in classCompilerPlugins: plugin(ClassCompilerGenerateOutput3, classDef)
-    for plugin in classCompilerPlugins: plugin(ClassCompilerGenerateOutput4, classDef)
-    for plugin in classCompilerPlugins: plugin(ClassCompilerGenerateOutput5, classDef)
+    for plugin in classCompilerPlugins: plugin(ClassCompilerGenerateCode, classDef)
     for plugin in classCompilerPlugins: plugin(ClassCompilerFinalize, classDef)
+
+    # Done
+    return classDef
+
+
+## Get code for a class definition (nnkStmtList)
+proc compile*(this : ClassDescription) : NimNode =
+
+    # Store this class definition
+    classCompilerCache.add(this)
+
+    # Generate code
+    var code = newStmtList()
+    code.add(this.outputPrefix)
+    code.add(this.outputObject)
+    code.add(this.outputForwardDeclarations)
+    code.add(this.outputBody)
+    code.add(this.outputSuffix)
 
     # Show debug info if requested
     const debugclasses {.strdefine.} = ""
     let debugClassNames = debugclasses.split(",")
-    if debugclasses == "true" or debugClassNames.contains($classDef.name):
-        echo "\n=== Created " & classDef.macroName & " " & $classDef.name & " of " & $classDef.superClass.name
-        for plugin in classCompilerPlugins: plugin(ClassCompilerDebugEcho, classDef)
+    if debugclasses == "true" or debugClassNames.contains($this.name):
+        echo "\n=== Created " & this.macroName & " " & $this.name & " of " & $this.superClass.name
+        for plugin in classCompilerPlugins: plugin(ClassCompilerDebugEcho, this)
         echo ""
-        echo classDef.outputPrefix.repr
-        echo classDef.outputObject.repr
-        echo classDef.output.repr
-        echo classDef.outputSuffix.repr
+        echo code.repr
         echo ""
-
-    # Store this class definition
-    classCompilerCache.add(classDef)
 
     # Done
-    return classDef
+    return code

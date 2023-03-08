@@ -43,6 +43,6 @@ proc exportAll(classDef : ClassDescription) =
 ## Register the plugin at compile-time
 static:
     classCompilerPlugins.add(proc(stage : ClassCompilerStage, classDef : ClassDescription) =
-        if stage == ClassCompilerModifyDefinition4: exportAll(classDef)
+        if stage == ClassCompilerModifyDefinitions: exportAll(classDef)
     )
 

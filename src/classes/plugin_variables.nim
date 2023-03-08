@@ -136,7 +136,7 @@ proc gatherDefinitions(classDef : ClassDescription) =
 
 
 ## Generate type definitions in the output code
-proc generateOutput1(classDef : ClassDescription) =
+proc generateCode(classDef : ClassDescription) =
 
     # Set a new RecList on the class object
     let recList = newNimNode(nnkRecList)
@@ -178,7 +178,7 @@ proc debugEcho(classDef : ClassDescription) =
 static:
     classCompilerPlugins.add(proc(stage : ClassCompilerStage, classDef : ClassDescription) =
         if stage == ClassCompilerGatherDefinitions: gatherDefinitions(classDef)
-        if stage == ClassCompilerGenerateOutput1: generateOutput1(classDef)
+        if stage == ClassCompilerGenerateCode: generateCode(classDef)
         if stage == ClassCompilerDebugEcho: debugEcho(classDef)
     )
 

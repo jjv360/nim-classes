@@ -211,20 +211,33 @@ class ClassWithFactory:
 assert(ClassWithFactory.withValue(3).v1 == 3)
 
 
+test "Destructor called"
 
+# # Counter to store destructor call count
+# var globalDestructorCounter = 1
 
-
-group "Destructors"
-test "Called on dealloc"
-warn "Not implemented yet"
-
-# var globalIsDestroyed = false
+# # Simple destructor
 # class TestDestructor1:
-#     method dealloc() = globalIsDestroyed = true
+#     method deinit() = globalDestructorCounter += 1
 
-# globalIsDestroyed = false
-# discard TestDestructor1.init()
-# assert(globalIsDestroyed == true)
+# # Class with destructor in the superclass
+# class TestDestructor2 of TestDestructor1
+
+# # Class with custom destructor
+# class TestDestructor3 of TestDestructor1:
+#     method deinit() = 
+#         super.deinit()
+#         globalDestructorCounter += 1    # <-- Add again
+
+# # Run all destructors
+# proc checkDestructor() =
+#     let cls = TestDestructor1.init()    # <-- Destructor adds one
+#     discard TestDestructor2.init()      # <-- Destructor in superclass adds one
+#     discard TestDestructor3.init()      # <-- Destructor adds one + calls super destructor which also adds one
+# checkDestructor()
+
+# # Ensure the counter is correct
+# assert(globalDestructorCounter == 5)
 
 
 

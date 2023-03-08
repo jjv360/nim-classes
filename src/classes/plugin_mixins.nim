@@ -57,22 +57,26 @@ proc injectMixin(classDef : ClassDescription, mixinDef : ClassDescription) =
         if $methodDef.definition.name == "init": continue
         if $methodDef.definition.name == "className": continue
 
+        # Skip injected methods
+        if methodDef.insertUnmodified:
+            continue
+
         # Make a new copy of this method
         let methodCopy = methodDef.clone()
 
         # Replace the "this" argument type
-        if methodCopy.isStatic:
+        # if methodCopy.isStatic:
 
-            # Inject typedesc as the first param on static methods
-            let classTypedesc = newNimNode(nnkBracketExpr)
-            classTypedesc.add(ident"typedesc")
-            classTypedesc.add(classDef.name)
-            methodCopy.definition.params[1] = newIdentDefs(ident"_", classTypedesc)
+        #     # Inject typedesc as the first param on static methods
+        #     let classTypedesc = newNimNode(nnkBracketExpr)
+        #     classTypedesc.add(ident"typedesc")
+        #     classTypedesc.add(classDef.name)
+        #     methodCopy.definition.params[1] = newIdentDefs(ident"_", classTypedesc)
 
-        else:
+        # else:
 
-            # Inject the `this` parameter as the first argument
-            methodCopy.definition.params[1] = newIdentDefs(ident"this", classDef.name)
+        #     # Inject the `this` parameter as the first argument
+        #     methodCopy.definition.params[1] = newIdentDefs(ident"this", classDef.name)
 
         # If the method returns the mixin class, make it return this class instead
         if methodCopy.definition.params[0].kind == nnkIdent and $methodCopy.definition.params[0] == $mixinDef.name:
@@ -114,7 +118,7 @@ proc debugEcho(classDef : ClassDescription) =
 static:
     classCompilerPlugins.add(proc(stage : ClassCompilerStage, classDef : ClassDescription) =
         if stage == ClassCompilerGatherDefinitions: gatherMixins(classDef)
-        if stage == ClassCompilerModifyDefinition1: injectMixins(classDef)
+        if stage == ClassCompilerGatherDefinitions: injectMixins(classDef)
         if stage == ClassCompilerDebugEcho: debugEcho(classDef)
     )
 
