@@ -657,6 +657,17 @@ singleton Singleton2 of Singleton1:
 
     method myFunc(): int = 6
 
+## Ensure only one class is created
+var singletonCounter = 0
+singleton SingleTest:
+    method init() = singletonCounter += 1
+    method deinit() = singletonCounter -= 1
+    method test() = discard
+SingleTest.shared.test()
+SingleTest.shared.test()
+assert(SingleTest.shared == SingleTest.shared, "Only one instance of a singleton should exist.")
+assert(singletonCounter == 1, "Singleton constructor should only run once")
+
 test "Subclassing"
 assert(Singleton2.shared.v1 == 3)
 assert(Singleton2.shared.v2 == 4)
