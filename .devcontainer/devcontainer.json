@@ -1,8 +1,0 @@
-{
-    "image": "nimlang/nim",
-    "customizations": {
-        "vscode": {
-            "extensions": ["kosz78.nim"]
-        }
-    }
-}
