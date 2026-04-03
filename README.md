@@ -21,8 +21,8 @@ import classes
 class Shape:
 
     ## The position of the shape
-    var x = 0
-    var y = 0
+    var x = 0.0
+    var y = 0.0
 
     ## Optional constructor
     method init() =
@@ -46,7 +46,7 @@ class Shape:
 class Square of Shape:
 
     # Radius
-    var radius = 5
+    var radius = 5.0
 
     ## Override constructor
     method init() =
@@ -62,14 +62,14 @@ class Square of Shape:
 
 
 # Many ways of creating class instances:
-let obj = Square.init()
-let obj = Square().init()
-let obj = newSquare()
+let obj1 = Square.init()
+let obj2 = Square().init()
+let obj3 = newSquare()
 
 # Call static methods
 # NOTE: Static methods don't always work if the name of your nim file is the exact same as the class name. 
 # You may get a `type mismatch: got <>` error in that case.
-Shape.defaultSize()
+echo Shape.defaultSize()
 
 
 # Data only classes
@@ -79,7 +79,7 @@ class DataOnly:
     var v2: string
 
 # Constructing it this way allows you to pass in values for the variables that don't have values set
-let obj = DataOnly(v1: 10, v2: "20").init()
+let obj4 = DataOnly(v1: 10, v2: "20").init()
 
 # Using the mixin keyword will copy the variables and methods from one class to another
 class CustomNote:
