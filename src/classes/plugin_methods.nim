@@ -112,7 +112,7 @@ proc existsIn*(this : Method, classDef : ClassDescription) : bool =
             return true
 
     # Continue recursively
-    if classDef.superClass != nil:
+    if not classDef.isRootClass():
         return this.existsIn(classDef.superClass)
 
     # Not found
