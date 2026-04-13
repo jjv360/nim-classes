@@ -92,7 +92,7 @@ proc injectMixin(classDef : ClassDescription, mixinDef : ClassDescription) =
         classDef.vars.definitions.add(varDef.clone())
 
     # If the mixin has a parent class, inject those too
-    if mixinDef.superClass != nil:
+    if not mixinDef.isRootClass():
         injectMixin(classDef, mixinDef.superClass)
 
 

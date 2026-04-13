@@ -164,7 +164,7 @@ proc newClassDescription*(macroName : string, head : NimNode, body : NimNode) : 
 
         # Invalid class syntax
         error("Invalid class syntax.", head)
-        return nil
+        # return nil # note, the error() above cancels compilation so it never gets further than this
 
     # Call plugin stages
     for plugin in classCompilerPlugins: plugin(ClassCompilerPreload, classDef)
@@ -184,6 +184,23 @@ proc newClassDescription*(macroName : string, head : NimNode, body : NimNode) : 
 
     # Done
     return classDef
+
+
+## Check if this is a root class definition, not subclassed to anything else
+proc isRootClass*(this : ClassDescription) : bool =
+    return this.superClass == nil or this.superClass.name == ident"RootRef"
+
+
+## Get the root class definition, excluding the Nim RootRef class
+proc rootClass*(this : ClassDescription) : ClassDescription =
+
+    # Go up the chain until we find the root class
+    var rootClassDef = this
+    while rootClassDef.superClass != nil and rootClassDef.superClass.name != ident"RootRef":
+        rootClassDef = rootClassDef.superClass
+
+    # Done
+    return rootClassDef
 
 
 ## Get code for a class definition (nnkStmtList)

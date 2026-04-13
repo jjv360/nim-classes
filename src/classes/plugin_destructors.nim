@@ -8,6 +8,14 @@ import ./internal
 import ./plugin_methods
 
 
+## Add {.raises: [].} to deinit methods, this is a warning that may become a requirement
+proc addRaisesNone(classDef : ClassDescription) =
+
+    for methodDef in classDef.methods.definitions:
+        if $methodDef.definition.name == "deinit":
+            methodDef.definition.addPragma(newColonExpr(ident"raises", newNimNode(nnkBracket)))
+
+
 ## Generate the destructor proc
 proc generateDestructor(classDef : ClassDescription) =
 
@@ -24,7 +32,7 @@ proc generateDestructor(classDef : ClassDescription) =
     let methodName = parseExpr("`=destroy`")
     let className = classDef.name
     classDef.outputBody.insert(0, quote do:
-        proc `methodName`*(thisRaw: var typeof(`className`()[])) =
+        proc `methodName`*(thisRaw: typeof(`className`()[])) =
             var this : `className` = cast[`className`](thisRaw.addr)
             this.deinit()
     )
@@ -34,6 +42,7 @@ proc generateDestructor(classDef : ClassDescription) =
 ## Register the plugin at compile-time
 static:
     classCompilerPlugins.add(proc(stage : ClassCompilerStage, classDef : ClassDescription) =
+        if stage == ClassCompilerModifyDefinitions: addRaisesNone(classDef)
         if stage == ClassCompilerGenerateCode: generateDestructor(classDef)
     )
 

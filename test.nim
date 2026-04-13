@@ -115,10 +115,10 @@ test "Automatic constructors on the base class"
 class ClassA
 
 # Our method of creating classes
-let classA1 = ClassA.init()
+discard ClassA.init()
 
 # Nim's method of creating classes
-let classA2 = newClassA()
+discard newClassA()
 
 
 
@@ -240,15 +240,15 @@ else:
 
     # Create objects to be cleaned up
     proc checkDestructor() =
-        let cls = TestDestructor1.init()    # <-- Destructor adds one
-        let cls2 = TestDestructor2.init()      # <-- Destructor in superclass adds one
-        let cls3 = TestDestructor3.init()      # <-- Destructor adds one + calls super destructor which also adds one
+        discard TestDestructor1.init()      # <-- Destructor adds one
+        discard TestDestructor2.init()      # <-- Destructor in superclass adds one
+        discard TestDestructor3.init()      # <-- Destructor adds one + calls super destructor which also adds one
     checkDestructor()
 
-    # GC takes a while, wait for it to be done
-    let startedAt = cpuTime()
+    # GC can take a while, wait for it to be done
+    let startedAt = epochTime()
     while true:
-        if globalDestructorCounter == 5 or startedAt - cpuTime() > 10: break
+        if globalDestructorCounter == 5 or epochTime() - startedAt > 5: break
         GC_fullCollect()
         sleep(100)
 

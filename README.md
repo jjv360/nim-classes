@@ -1,6 +1,7 @@
 # Classes
 
 ![](https://img.shields.io/badge/status-beta-orange)
+![](https://img.shields.io/badge/nim-2.0.6+-darkgreen)
 
 A collection of macros which add class support to Nim. To install, run `nimble install classes`. Features include:
 

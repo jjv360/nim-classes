@@ -1,5 +1,5 @@
 ##
-## This plugin manages class constructors
+## This plugin handles exporting the class.
 
 {.used.}
 
